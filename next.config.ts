@@ -4,6 +4,18 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "topsortassets.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn1.staticpanvel.com.br",
+      },
+    ],
+  },
   turbopack: {
     rules: {
       "*.css": {

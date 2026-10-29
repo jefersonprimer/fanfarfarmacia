@@ -1,0 +1,554 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import {
+  MapPin,
+  Menu,
+  ChevronDown,
+  ChevronRight,
+  X,
+  Navigation,
+} from "lucide-react";
+import { DEPARTMENTS } from "@/lib/departments";
+import { slugify } from "@/lib/catalog";
+
+const HEALTH_SERVICES = [
+  "Vacinas",
+  "Teste de COVID",
+  "Serviços farmacêuticos",
+  "Exames clínicos",
+  "Telessaúde",
+  "Manipulação",
+  "Jornada saudável na Vitat",
+  "Dose Certa",
+];
+
+export default function SubHeader() {
+  const [cepModalOpen, setCepModalOpen] = useState(false);
+  const [cepInput, setCepInput] = useState("");
+  const [currentCep, setCurrentCep] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [departmentModalOpen, setDepartmentModalOpen] = useState(false);
+  const [activeDepartment, setActiveDepartment] = useState(DEPARTMENTS[0].name);
+
+  const [healthServicesOpen, setHealthServicesOpen] = useState(false);
+  const [healthServicesPosition, setHealthServicesPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const healthServicesButtonRef = useRef<HTMLButtonElement>(null);
+
+  const cepDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Carrega CEP salvo do localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("fanfar_cep");
+      if (saved) {
+        setCurrentCep(saved);
+        setCepInput(saved);
+      }
+    } catch {
+      // Ignora erro de acesso a storage
+    }
+  }, []);
+
+  // Fecha dropdown ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        cepDropdownRef.current &&
+        !cepDropdownRef.current.contains(event.target as Node)
+      ) {
+        setCepModalOpen(false);
+      }
+    }
+
+    if (cepModalOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [cepModalOpen]);
+
+  // Fecha com a tecla Escape
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setCepModalOpen(false);
+      }
+    }
+
+    if (cepModalOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [cepModalOpen]);
+
+  // Fecha o modal de departamentos com a tecla Escape e trava o scroll
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setDepartmentModalOpen(false);
+      }
+    }
+
+    if (departmentModalOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [departmentModalOpen]);
+
+  // Fecha o dropdown de serviços de saúde com a tecla Escape
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setHealthServicesOpen(false);
+      }
+    }
+
+    if (healthServicesOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [healthServicesOpen]);
+
+  // Formata o CEP para o formato 00000-000
+  const formatCep = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length > 5) {
+      return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    }
+    return digits;
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCep(e.target.value);
+    setCepInput(formatted);
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
+  };
+
+  const handleSaveCep = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = cepInput.replace(/\D/g, "");
+    if (clean.length === 8) {
+      const formatted = formatCep(clean);
+      setCurrentCep(formatted);
+      try {
+        localStorage.setItem("fanfar_cep", formatted);
+      } catch {}
+      setCepModalOpen(false);
+      setErrorMessage(null);
+    } else {
+      setErrorMessage("Por favor, digite um CEP válido com 8 dígitos.");
+    }
+  };
+
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      setErrorMessage("Geolocalização não é suportada pelo seu navegador.");
+      return;
+    }
+
+    setIsLocating(true);
+    setErrorMessage(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const postcode = data.address?.postcode;
+            if (postcode) {
+              const formatted = formatCep(postcode);
+              setCepInput(formatted);
+              setCurrentCep(formatted);
+              try {
+                localStorage.setItem("fanfar_cep", formatted);
+              } catch {}
+              setCepModalOpen(false);
+              return;
+            }
+          }
+          setErrorMessage(
+            "Não foi possível identificar o CEP exato pela localização. Digite manualmente.",
+          );
+        } catch {
+          setErrorMessage("Não foi possível obter o CEP pela sua localização.");
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        if (err.code === 1) {
+          setErrorMessage("Permissão de localização negada pelo navegador.");
+        } else {
+          setErrorMessage("Erro ao obter localização atual.");
+        }
+      },
+      { timeout: 10000 },
+    );
+  };
+
+  const activeCategories =
+    DEPARTMENTS.find((d) => d.name === activeDepartment)?.categories ?? [];
+
+  const handleHealthServicesToggle = () => {
+    if (!healthServicesOpen && healthServicesButtonRef.current) {
+      const rect = healthServicesButtonRef.current.getBoundingClientRect();
+      const panelWidth = 264;
+
+      setHealthServicesPosition({
+        top: rect.bottom + 8,
+        left: Math.max(
+          12,
+          Math.min(rect.left, window.innerWidth - panelWidth - 12),
+        ),
+      });
+    }
+
+    setHealthServicesOpen((previous) => !previous);
+  };
+
+  return (
+    <nav className="w-full bg-white border-b border-gray-200 text-sm relative z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between min-h-[52px] py-2 gap-3 sm:gap-6 min-w-0">
+          {/* Esquerda: Insira seu CEP com Dropdown logo abaixo */}
+          <div className="relative shrink-0" ref={cepDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setCepModalOpen((prev) => !prev)}
+              aria-expanded={cepModalOpen}
+              className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-700 hover:text-gray-900 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200"
+            >
+              <MapPin className="h-4 w-4 text-[#279236] shrink-0" />
+              <span className="font-medium whitespace-nowrap">
+                {currentCep ? `CEP: ${currentCep}` : "Insira o seu CEP"}
+              </span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
+                  cepModalOpen ? "rotate-180 text-gray-600" : ""
+                }`}
+              />
+            </button>
+
+            {/* Modal / Popover logo abaixo de onde foi chamado */}
+            {cepModalOpen && (
+              <div
+                role="dialog"
+                aria-label="Informe seu Cep"
+                className="absolute left-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 z-50 animate-in fade-in zoom-in-95 duration-150"
+              >
+                {/* Seta discreta apontando para o botão */}
+                <div className="absolute -top-1.5 left-7 w-3 h-3 bg-white border-t border-l border-gray-200 rotate-45" />
+
+                {/* Cabeçalho */}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 leading-snug">
+                      Informe seu Cep
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      Estoque e tempo de entrega podem variar de acordo com a
+                      região.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCepModalOpen(false)}
+                    className="p-1 -mr-1 -mt-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    aria-label="Fechar"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Corpo: Adicione seu CEP */}
+                <div className="mt-4">
+                  <label
+                    htmlFor="cep-input"
+                    className="block text-xs font-semibold text-gray-800 mb-1.5"
+                  >
+                    Adicione seu CEP
+                  </label>
+
+                  <form onSubmit={handleSaveCep} className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          id="cep-input"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={9}
+                          value={cepInput}
+                          onChange={handleCepChange}
+                          placeholder="CEP"
+                          className="w-full px-3.5 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#279236] focus:border-transparent transition-all"
+                          autoFocus
+                        />
+                        {cepInput && (
+                          <button
+                            type="button"
+                            onClick={() => setCepInput("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded-full"
+                            aria-label="Limpar campo"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={cepInput.replace(/\D/g, "").length !== 8}
+                        className="px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#279236] hover:bg-[#1f7a2b] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors shrink-0 shadow-sm"
+                      >
+                        Inserir
+                      </button>
+                    </div>
+
+                    {errorMessage && (
+                      <p className="text-[11px] text-red-600 font-medium">
+                        {errorMessage}
+                      </p>
+                    )}
+
+                    {/* Botão Usar minha localização */}
+                    <button
+                      type="button"
+                      onClick={handleUseLocation}
+                      disabled={isLocating}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 hover:border-[#279236]/40 bg-gray-50/60 hover:bg-[#279236]/5 rounded-lg text-xs sm:text-sm font-medium text-[#279236] transition-colors disabled:opacity-60 disabled:cursor-not-allowed group"
+                    >
+                      <Navigation
+                        className={`h-4 w-4 text-[#279236] shrink-0 group-hover:scale-110 transition-transform ${
+                          isLocating ? "animate-spin" : ""
+                        }`}
+                      />
+                      <span>
+                        {isLocating
+                          ? "Buscando sua localização..."
+                          : "Usar minha localização"}
+                      </span>
+                    </button>
+                  </form>
+
+                  {/* Rodapé informativo */}
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <p className="text-[11px] text-gray-400 text-center leading-normal">
+                      Confirme o endereço na finalização da compra.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Separador vertical */}
+          <div className="h-4 w-px bg-gray-200 shrink-0 hidden sm:block" />
+
+          {/* Meio: Departamentos e Links de Navegação (sem ícones exceto Menu de hambúrguer) */}
+          <div className="flex items-center gap-3 sm:gap-5 md:gap-6 min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1 text-xs sm:text-sm font-medium text-gray-700">
+            {/* Botão Departamentos - somente o ícone de hambúrguer */}
+            <button
+              type="button"
+              onClick={() => setDepartmentModalOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={departmentModalOpen}
+              className="flex items-center gap-1.5 py-1.5 px-3 rounded-full hover:text-[#279236] hover:bg-neutral-100 transition-colors font-semibold text-gray-900 shrink-0"
+            >
+              <Menu className="h-4 w-4 text-gray-700" />
+              <span>Departamentos</span>
+            </button>
+
+            <Link
+              href="/cupons"
+              className="hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+            >
+              Cupons
+            </Link>
+
+            <button
+              ref={healthServicesButtonRef}
+              type="button"
+              onClick={handleHealthServicesToggle}
+              aria-haspopup="menu"
+              aria-expanded={healthServicesOpen}
+              className="flex items-center gap-1 hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+            >
+              <span>Serviços de Saúde</span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${
+                  healthServicesOpen ? "rotate-180 text-gray-600" : ""
+                }`}
+              />
+            </button>
+
+            <Link
+              href="/marcas"
+              className="hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+            >
+              Nossas Marcas
+            </Link>
+
+            <Link
+              href="/ofertas"
+              className="hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+            >
+              Ofertas Exclusivas
+            </Link>
+
+            {/* Destaque Black Week */}
+            <Link
+              href="/black-week"
+              className="bg-black hover:bg-zinc-800 text-white text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0"
+            >
+              Black Week
+            </Link>
+          </div>
+
+          {/* Direita: Primeira Compra Cupom (sem ícone) */}
+          <div className="shrink-0 hidden lg:flex items-center">
+            <Link
+              href="/cupons#primeira-compra"
+              className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-full transition-colors whitespace-nowrap"
+            >
+              Primeira Compra? Ganhe CUPOM!
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Dropdown de Serviços de Saúde */}
+      {healthServicesOpen &&
+        healthServicesPosition &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[60]"
+            role="presentation"
+            onMouseDown={() => setHealthServicesOpen(false)}
+          >
+            <div
+              role="menu"
+              aria-label="Serviços de Saúde"
+              onMouseDown={(event) => event.stopPropagation()}
+              style={{
+                top: healthServicesPosition.top,
+                left: healthServicesPosition.left,
+              }}
+              className="absolute w-64 overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100"
+            >
+              {HEALTH_SERVICES.map((service) => (
+                <Link
+                  key={service}
+                  href={`/servicos-de-saude/${slugify(service)}`}
+                  role="menuitem"
+                  onClick={() => setHealthServicesOpen(false)}
+                  className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                >
+                  <span>{service}</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Modal de Departamentos com categorias ao passar o cursor */}
+      {departmentModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[70] flex items-start justify-center px-4 pt-32 sm:pt-36"
+            role="presentation"
+            onMouseDown={() => setDepartmentModalOpen(false)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Departamentos"
+              onMouseDown={(event) => event.stopPropagation()}
+              className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr] max-h-[70vh]">
+                {/* Departamentos */}
+                <ul className="border-b sm:border-b-0 sm:border-r border-gray-100 p-2 sm:p-3 overflow-y-auto max-h-48 sm:max-h-none [scrollbar-width:thin]">
+                  {DEPARTMENTS.map((department) => {
+                    const isActive = department.name === activeDepartment;
+                    return (
+                      <li key={department.name}>
+                        <Link
+                          href={`/departamento/${slugify(department.name)}`}
+                          onMouseEnter={() =>
+                            setActiveDepartment(department.name)
+                          }
+                          onFocus={() => setActiveDepartment(department.name)}
+                          onClick={() => setDepartmentModalOpen(false)}
+                          aria-current={isActive ? "true" : undefined}
+                          className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-sm font-medium transition-colors ${
+                            isActive
+                              ? "bg-[#279236]/10 text-[#279236]"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          }`}
+                        >
+                          <span className="truncate">{department.name}</span>
+                          <ChevronRight
+                            className={`h-4 w-4 shrink-0 transition-transform ${
+                              isActive
+                                ? "text-[#279236] translate-x-0.5"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {/* Categorias do departamento ativo */}
+                <div className="p-4 sm:p-5 overflow-y-auto max-h-[50vh] sm:max-h-[calc(70vh-73px)]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {activeCategories.map((category) => (
+                      <Link
+                        key={category}
+                        href={`/departamento/${slugify(
+                          activeDepartment,
+                        )}/${slugify(category)}`}
+                        onClick={() => setDepartmentModalOpen(false)}
+                        className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      >
+                        <span>{category}</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-gray-300 shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </nav>
+  );
+}
