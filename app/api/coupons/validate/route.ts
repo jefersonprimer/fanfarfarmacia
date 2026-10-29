@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { calculateDiscount, normalizeCoupon } from "@/lib/coupons";
 import type { AppliedCoupon } from "@/types/coupon";
+import { ensureCouponShippingColumn } from "@/lib/coupons-server";
 
 export async function POST(request: Request) {
   try {
+    await ensureCouponShippingColumn();
     const { code, subtotal } = await request.json();
     const normalizedCode = String(code ?? "").trim().toUpperCase();
     const subtotalValue = Number(subtotal);
@@ -84,6 +86,7 @@ export async function POST(request: Request) {
       discount_value: coupon.discount_value,
       min_purchase: coupon.min_purchase,
       max_discount: coupon.max_discount,
+      free_shipping: coupon.free_shipping,
     };
 
     return NextResponse.json({

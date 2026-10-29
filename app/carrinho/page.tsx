@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -15,10 +16,10 @@ import {
   X,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import {
-  calculateLineDiscount,
-  getPromotedUnitPrice,
-} from "@/lib/promotions";
+import { useDeliveryFee } from "@/hooks/useDeliveryFee";
+import { useStoreSchedule } from "@/hooks/useStoreSchedule";
+import { describeStoreHours, getScheduleError } from "@/lib/store-hours";
+import { calculateLineDiscount, getPromotedUnitPrice } from "@/lib/promotions";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -26,6 +27,9 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 export default function CartPage() {
+  const router = useRouter();
+  const deliveryFee = useDeliveryFee();
+  const storeSchedule = useStoreSchedule();
   const {
     items,
     itemCount,
@@ -47,6 +51,164 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepMessage, setCepMessage] = useState("");
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [scheduleBounds, setScheduleBounds] = useState({ min: "", max: "" });
+  const [delivery, setDelivery] = useState({
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    scheduledFor: "",
+  });
+
+  useEffect(() => {
+    if (!checkoutOpen) return;
+    const formatLocalDateTime = (date: Date) => {
+      const pad = (value: number) => String(value).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+    const now = new Date();
+    setScheduleBounds({
+      min: formatLocalDateTime(new Date(now.getTime() + 30 * 60 * 1000)),
+      max: formatLocalDateTime(
+        new Date(now.getTime() + storeSchedule.maxAdvanceDays * 86_400_000),
+      ),
+    });
+  }, [checkoutOpen, storeSchedule.maxAdvanceDays]);
+
+  useEffect(() => {
+    if (!delivery.scheduledFor) {
+      setScheduleError(null);
+      return;
+    }
+    setScheduleError(getScheduleError(delivery.scheduledFor, storeSchedule));
+  }, [delivery.scheduledFor, storeSchedule]);
+
+  useEffect(() => {
+    if (!checkoutOpen) return;
+    let savedCep = "";
+    try {
+      savedCep = localStorage.getItem("fanfar_cep") || "";
+    } catch {
+      return;
+    }
+    if (savedCep.replace(/\D/g, "").length !== 8) return;
+
+    setDelivery((previous) => ({ ...previous, cep: savedCep }));
+    void (async () => {
+      try {
+        const response = await fetch(
+          `https://viacep.com.br/ws/${savedCep.replace(/\D/g, "")}/json/`,
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.erro) return;
+        setDelivery((previous) => ({
+          ...previous,
+          cep: data.cep || savedCep,
+          street: previous.street || data.logradouro || "",
+          neighborhood: previous.neighborhood || data.bairro || "",
+          city: previous.city || data.localidade || "",
+          state: previous.state || data.uf || "",
+        }));
+      } catch {
+        // O usuário ainda pode preencher o endereço manualmente.
+      }
+    })();
+  }, [checkoutOpen]);
+
+  const handleCheckout = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const selectedScheduleError = getScheduleError(
+      delivery.scheduledFor,
+      storeSchedule,
+    );
+    if (selectedScheduleError) {
+      setScheduleError(selectedScheduleError);
+      return;
+    }
+    setScheduleError(null);
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map(({ product, quantity }) => ({
+            productId: product.id,
+            quantity,
+          })),
+          address: {
+            cep: delivery.cep,
+            street: delivery.street,
+            number: delivery.number,
+            complement: delivery.complement,
+            neighborhood: delivery.neighborhood,
+            city: delivery.city,
+            state: delivery.state,
+          },
+          scheduledFor: new Date(delivery.scheduledFor).toISOString(),
+          freeShippingCouponCode: coupon?.free_shipping ? coupon.code : null,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok)
+        throw new Error(data.error || "Não foi possível finalizar o pedido.");
+      clearCart();
+      router.push(`/pedidos?novo=${data.order.id}`);
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível finalizar o pedido.",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const lookupCep = async () => {
+    const cep = delivery.cep.replace(/\D/g, "");
+    if (cep.length !== 8) {
+      setCepMessage("Digite um CEP com 8 números.");
+      return;
+    }
+    setCepLoading(true);
+    setCepMessage("");
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!response.ok)
+        throw new Error("Não foi possível consultar o CEP agora.");
+      const data = await response.json();
+      if (data.erro) throw new Error("CEP não encontrado. Confira os números.");
+      setDelivery((previous) => ({
+        ...previous,
+        cep: data.cep || previous.cep,
+        street: data.logradouro || previous.street,
+        neighborhood: data.bairro || previous.neighborhood,
+        city: data.localidade || previous.city,
+        state: data.uf || previous.state,
+      }));
+      setCepMessage(
+        "Endereço preenchido. Confira os dados e informe o número.",
+      );
+    } catch (error) {
+      setCepMessage(
+        error instanceof Error ? error.message : "Falha ao buscar o CEP.",
+      );
+    } finally {
+      setCepLoading(false);
+    }
+  };
 
   const handleApplyCoupon = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -79,7 +241,7 @@ export default function CartPage() {
       setCouponError(
         error instanceof Error
           ? error.message
-          : "Não foi possível aplicar o cupom."
+          : "Não foi possível aplicar o cupom.",
       );
     } finally {
       setCouponLoading(false);
@@ -94,22 +256,15 @@ export default function CartPage() {
 
   return (
     <main className="flex-1 bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-blue-600"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Continuar comprando
-        </Link>
-
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
-          Meu carrinho
-        </h1>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">Meu carrinho</h1>
 
         {items.length === 0 ? (
           <div className="mt-6 flex flex-col items-center rounded-2xl border border-gray-200 bg-white px-4 py-16 text-center">
-            <ShoppingBag className="h-12 w-12 text-gray-300" aria-hidden="true" />
+            <ShoppingBag
+              className="h-12 w-12 text-gray-300"
+              aria-hidden="true"
+            />
             <h2 className="mt-4 text-lg font-bold text-gray-900">
               Seu carrinho está vazio
             </h2>
@@ -133,7 +288,7 @@ export default function CartPage() {
                 const lineDiscount = calculateLineDiscount(
                   promotion,
                   unitPrice,
-                  quantity
+                  quantity,
                 );
                 const hasLinePromotion = lineDiscount > 0;
                 const promotedUnitPrice =
@@ -167,17 +322,18 @@ export default function CartPage() {
 
                     <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div className="min-w-0">
+                        <Link
+                          href={`/produto/${product.slug}`}
+                          className="block truncate text-sm font-semibold text-gray-800 transition-colors hover:text-[#1f7a2b] hover:underline"
+                        >
+                          {product.name}
+                        </Link>
                         {product.brand && (
                           <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
                             {product.brand}
                           </span>
                         )}
-                        <Link
-                          href={`/produto/${product.slug}`}
-                          className="block truncate text-sm font-semibold text-gray-800 transition-colors hover:text-blue-600"
-                        >
-                          {product.name}
-                        </Link>
+
                         <p className="mt-1 flex items-baseline gap-2 text-sm">
                           {hasLinePromotion && (
                             <span className="text-xs text-gray-400 line-through">
@@ -192,9 +348,7 @@ export default function CartPage() {
                             }`}
                           >
                             {currencyFormatter.format(
-                              hasLinePromotion
-                                ? promotedUnitPrice
-                                : unitPrice
+                              hasLinePromotion ? promotedUnitPrice : unitPrice,
                             )}
                           </span>
                           {promotion?.badge_label && (
@@ -237,9 +391,7 @@ export default function CartPage() {
                           <div className="text-right">
                             {hasLinePromotion && (
                               <span className="block text-[11px] text-gray-400 line-through">
-                                {currencyFormatter.format(
-                                  unitPrice * quantity
-                                )}
+                                {currencyFormatter.format(unitPrice * quantity)}
                               </span>
                             )}
                             <span className="text-sm font-bold text-gray-900">
@@ -300,7 +452,7 @@ export default function CartPage() {
                             {couponEligible
                               ? "Cupom aplicado"
                               : `Valor mínimo de ${currencyFormatter.format(
-                                  coupon.min_purchase
+                                  coupon.min_purchase,
                                 )}`}
                           </p>
                         </div>
@@ -380,17 +532,35 @@ export default function CartPage() {
                 )}
                 <div className="flex items-center justify-between text-gray-500">
                   <dt>Frete</dt>
-                  <dd>Calculado na finalização</dd>
+                  <dd>
+                    {coupon?.free_shipping
+                      ? "Grátis"
+                      : currencyFormatter.format(deliveryFee)}
+                  </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
                   <dt>Total</dt>
-                  <dd>{currencyFormatter.format(finalTotal)}</dd>
+                  <dd>
+                    {currencyFormatter.format(
+                      finalTotal + (coupon?.free_shipping ? 0 : deliveryFee),
+                    )}
+                  </dd>
                 </div>
               </dl>
 
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutError(null);
+                  setCheckoutOpen(true);
+                }}
+                className="mt-5 flex w-full items-center justify-center rounded-full bg-[#279236] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] cursor-pointer"
+              >
+                Agendar e finalizar pedido
+              </button>
               <Link
                 href="/"
-                className="mt-5 flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                className="mt-3 flex w-full items-center justify-center rounded-full border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50"
               >
                 Continuar comprando
               </Link>
@@ -398,6 +568,230 @@ export default function CartPage() {
           </div>
         )}
       </div>
+      {checkoutOpen && items.length > 0 && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-gray-950/55 p-4 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setCheckoutOpen(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="checkout-title"
+            className="my-auto w-full max-w-xl rounded-2xl bg-white shadow-2xl"
+          >
+            <header className="flex items-start justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+              <div>
+                <h2
+                  id="checkout-title"
+                  className="text-lg font-bold text-gray-900"
+                >
+                  Endereço e entrega
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Informe onde e quando deseja receber o pedido.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCheckoutOpen(false)}
+                aria-label="Fechar janela"
+                className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+              >
+                <X size={24} />
+              </button>
+            </header>
+            <form
+              onSubmit={handleCheckout}
+              className="max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto px-5 py-5 sm:px-6"
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="text-xs font-semibold text-gray-700">
+                  <label htmlFor="delivery-cep">CEP</label>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      id="delivery-cep"
+                      required
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      placeholder="00000-000"
+                      value={delivery.cep}
+                      onChange={(e) => {
+                        setDelivery({ ...delivery, cep: e.target.value });
+                        setCepMessage("");
+                      }}
+                      onBlur={() => {
+                        if (
+                          delivery.cep.replace(/\D/g, "").length === 8 &&
+                          !delivery.street
+                        )
+                          void lookupCep();
+                      }}
+                      className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void lookupCep()}
+                      disabled={cepLoading}
+                      className="shrink-0 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      {cepLoading ? "Buscando..." : "Buscar CEP"}
+                    </button>
+                  </div>
+                  {cepMessage && (
+                    <p
+                      role="status"
+                      className={`mt-1 text-xs font-normal ${cepMessage.startsWith("Endereço") ? "text-emerald-700" : "text-amber-700"}`}
+                    >
+                      {cepMessage}
+                    </p>
+                  )}
+                </div>
+                <label className="text-xs font-semibold text-gray-700">
+                  Rua ou avenida
+                  <input
+                    required
+                    aria-label="Rua ou avenida"
+                    placeholder="Nome da rua"
+                    value={delivery.street}
+                    onChange={(e) =>
+                      setDelivery({ ...delivery, street: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                  />
+                </label>
+                <label className="text-xs font-semibold text-gray-700">
+                  Número
+                  <input
+                    required
+                    aria-label="Número"
+                    placeholder="Número"
+                    value={delivery.number}
+                    onChange={(e) =>
+                      setDelivery({ ...delivery, number: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                  />
+                </label>
+                <label className="text-xs font-semibold text-gray-700">
+                  Complemento
+                  <input
+                    aria-label="Complemento"
+                    placeholder="Apartamento, bloco..."
+                    value={delivery.complement}
+                    onChange={(e) =>
+                      setDelivery({ ...delivery, complement: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                  />
+                </label>
+                <label className="text-xs font-semibold text-gray-700">
+                  Bairro
+                  <input
+                    required
+                    aria-label="Bairro"
+                    placeholder="Bairro"
+                    value={delivery.neighborhood}
+                    onChange={(e) =>
+                      setDelivery({ ...delivery, neighborhood: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                  />
+                </label>
+                <label className="text-xs font-semibold text-gray-700">
+                  Cidade
+                  <input
+                    required
+                    aria-label="Cidade"
+                    placeholder="Cidade"
+                    value={delivery.city}
+                    onChange={(e) =>
+                      setDelivery({ ...delivery, city: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                  />
+                </label>
+                <label className="text-xs font-semibold text-gray-700 sm:col-span-2">
+                  Estado
+                  <input
+                    required
+                    aria-label="Estado"
+                    placeholder="UF"
+                    maxLength={2}
+                    value={delivery.state}
+                    onChange={(e) =>
+                      setDelivery({
+                        ...delivery,
+                        state: e.target.value.toUpperCase(),
+                      })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal sm:max-w-32"
+                  />
+                </label>
+                <label className="text-xs font-semibold text-gray-700 sm:col-span-2">
+                  Data e horário desejados
+                  <input
+                    required
+                    type="datetime-local"
+                    min={scheduleBounds.min}
+                    max={scheduleBounds.max}
+                    value={delivery.scheduledFor}
+                    onChange={(e) =>
+                      setDelivery({ ...delivery, scheduledFor: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-normal"
+                  />
+                  <span className="mt-1 block text-xs font-normal text-gray-500">
+                    Funcionamento (horário de Brasília):{" "}
+                    {describeStoreHours(storeSchedule)} Agende com até{" "}
+                    {storeSchedule.maxAdvanceDays} dias de antecedência.
+                  </span>
+                  {scheduleError && (
+                    <span
+                      role="alert"
+                      className="mt-1 block text-xs font-semibold text-red-600"
+                    >
+                      {scheduleError}
+                    </span>
+                  )}
+                </label>
+              </div>
+              <p className="text-xs text-gray-500">
+                O pedido será enviado à farmácia para aprovação.
+              </p>
+              {checkoutError && (
+                <p role="alert" className="text-sm font-medium text-red-600">
+                  {checkoutError}
+                  {checkoutError.includes("Faça login") && (
+                    <>
+                      {" "}
+                      <Link className="underline" href="/login?next=/carrinho">
+                        Entrar
+                      </Link>
+                    </>
+                  )}
+                </p>
+              )}
+              <footer className="flex flex-col-reverse gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutOpen(false)}
+                  className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-50"
+                >
+                  Voltar ao carrinho
+                </button>
+                <button
+                  disabled={checkoutLoading || Boolean(scheduleError)}
+                  className="rounded-xl bg-[#279236] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:opacity-60 cursor-pointer"
+                >
+                  {checkoutLoading ? "Enviando pedido..." : "Confirmar pedido"}
+                </button>
+              </footer>
+            </form>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

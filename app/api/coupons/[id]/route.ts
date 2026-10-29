@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizeCoupon } from "@/lib/coupons";
 import type { CouponInput } from "@/types/coupon";
+import { ensureCouponShippingColumn } from "@/lib/coupons-server";
 
 function normalizeCode(value: string) {
   return value.trim().toUpperCase().replace(/\s+/g, "");
@@ -13,6 +14,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureCouponShippingColumn();
     const user = await getCurrentUser();
 
     if (!user || user.role !== "admin") {
@@ -27,6 +29,7 @@ export async function PUT(
     const code = normalizeCode(body.code ?? "");
     const discountType = body.discount_type;
     const discountValue = Number(body.discount_value);
+    const freeShipping = body.free_shipping === true;
 
     if (!code) {
       return NextResponse.json(
@@ -42,7 +45,7 @@ export async function PUT(
       );
     }
 
-    if (!Number.isFinite(discountValue) || discountValue <= 0) {
+    if (!Number.isFinite(discountValue) || discountValue < 0 || (discountValue === 0 && !freeShipping)) {
       return NextResponse.json(
         { error: "Informe um valor de desconto válido." },
         { status: 400 }
@@ -64,12 +67,13 @@ export async function PUT(
         discount_value = $4,
         min_purchase = $5,
         max_discount = $6,
-        usage_limit = $7,
-        starts_at = COALESCE($8, starts_at),
-        expires_at = $9,
-        active = $10,
+        free_shipping = $7,
+        usage_limit = $8,
+        starts_at = COALESCE($9, starts_at),
+        expires_at = $10,
+        active = $11,
         updated_at = NOW()
-      WHERE id = $11
+      WHERE id = $12
       RETURNING *`,
       [
         code,
@@ -78,6 +82,7 @@ export async function PUT(
         discountValue,
         Number(body.min_purchase) || 0,
         body.max_discount ? Number(body.max_discount) : null,
+        body.free_shipping ?? false,
         body.usage_limit ? Number(body.usage_limit) : null,
         body.starts_at ? new Date(body.starts_at) : null,
         body.expires_at ? new Date(body.expires_at) : null,
@@ -119,6 +124,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureCouponShippingColumn();
     const user = await getCurrentUser();
 
     if (!user || user.role !== "admin") {

@@ -59,8 +59,7 @@ export default function CartToast() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <p className="flex items-center gap-1 text-sm font-semibold text-emerald-700">
             Produto adicionado ao seu carrinho
           </p>
           <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">

@@ -40,7 +40,7 @@ export default function CouponFormModal({
     coupon?.discount_type ?? "percentage"
   );
   const [discountValue, setDiscountValue] = useState(
-    coupon ? String(coupon.discount_value) : ""
+    coupon && coupon.discount_value > 0 ? String(coupon.discount_value) : ""
   );
   const [minPurchase, setMinPurchase] = useState(
     coupon ? String(coupon.min_purchase) : "0"
@@ -48,6 +48,7 @@ export default function CouponFormModal({
   const [maxDiscount, setMaxDiscount] = useState(
     coupon?.max_discount != null ? String(coupon.max_discount) : ""
   );
+  const [freeShipping, setFreeShipping] = useState(coupon?.free_shipping ?? false);
   const [usageLimit, setUsageLimit] = useState(
     coupon?.usage_limit != null ? String(coupon.usage_limit) : ""
   );
@@ -81,9 +82,10 @@ export default function CouponFormModal({
         code,
         description: description || null,
         discount_type: discountType,
-        discount_value: parseFloat(discountValue),
+        discount_value: discountValue ? parseFloat(discountValue) : 0,
         min_purchase: minPurchase ? parseFloat(minPurchase) : 0,
         max_discount: maxDiscount ? parseFloat(maxDiscount) : null,
+        free_shipping: freeShipping,
         usage_limit: usageLimit ? parseInt(usageLimit, 10) : null,
         starts_at: startsAt ? new Date(startsAt).toISOString() : null,
         expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
@@ -171,7 +173,7 @@ export default function CouponFormModal({
                     setCode(event.target.value.toUpperCase())
                   }
                   placeholder="Ex: BEMVINDO10"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm uppercase text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm uppercase text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
@@ -184,7 +186,7 @@ export default function CouponFormModal({
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder="Ex: 10% off na primeira compra"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
             </div>
@@ -199,7 +201,7 @@ export default function CouponFormModal({
                   onChange={(event) =>
                     setDiscountType(event.target.value as CouponDiscountType)
                   }
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 >
                   <option value="percentage">Percentual (%)</option>
                   <option value="fixed">Valor fixo (R$)</option>
@@ -213,12 +215,12 @@ export default function CouponFormModal({
                 <input
                   type="number"
                   step="0.01"
-                  min="0.01"
-                  required
+                  min={freeShipping ? "0" : "0.01"}
+                  required={!freeShipping}
                   value={discountValue}
                   onChange={(event) => setDiscountValue(event.target.value)}
-                  placeholder={discountType === "percentage" ? "10" : "20.00"}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder={freeShipping ? "0.00 se não houver desconto em produtos" : discountType === "percentage" ? "10" : "20.00"}
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
             </div>
@@ -235,7 +237,7 @@ export default function CouponFormModal({
                   value={minPurchase}
                   onChange={(event) => setMinPurchase(event.target.value)}
                   placeholder="0.00"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
@@ -250,7 +252,7 @@ export default function CouponFormModal({
                   value={maxDiscount}
                   onChange={(event) => setMaxDiscount(event.target.value)}
                   placeholder="Sem limite"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
@@ -264,7 +266,7 @@ export default function CouponFormModal({
                   value={usageLimit}
                   onChange={(event) => setUsageLimit(event.target.value)}
                   placeholder="Ilimitado"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
             </div>
@@ -278,7 +280,7 @@ export default function CouponFormModal({
                   type="datetime-local"
                   value={startsAt}
                   onChange={(event) => setStartsAt(event.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
                 <p className="mt-1 text-[11px] text-gray-400">
                   Em branco significa válido imediatamente.
@@ -293,7 +295,7 @@ export default function CouponFormModal({
                   type="datetime-local"
                   value={expiresAt}
                   onChange={(event) => setExpiresAt(event.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
                 <p className="mt-1 text-[11px] text-gray-400">
                   Em branco significa sem data de expiração.
@@ -304,9 +306,19 @@ export default function CouponFormModal({
             <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
+                checked={freeShipping}
+                onChange={(event) => setFreeShipping(event.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-[#279236]"
+              />
+              <span>Oferece frete grátis</span>
+            </label>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
                 checked={active}
                 onChange={(event) => setActive(event.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                className="h-4 w-4 rounded border-gray-300 text-[#279236]"
               />
               <span>Cupom ativo</span>
             </label>
@@ -323,7 +335,7 @@ export default function CouponFormModal({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-70"
+              className="rounded-lg bg-[#279236] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:opacity-70"
             >
               {submitting
                 ? "Salvando..."

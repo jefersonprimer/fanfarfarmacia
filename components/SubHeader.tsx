@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useState,
+  useRef,
+  useEffect,
+  type ReactNode,
+  type ReactPortal,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   MapPin,
@@ -14,6 +23,72 @@ import {
 import { DEPARTMENTS } from "@/lib/departments";
 import { slugify } from "@/lib/catalog";
 
+interface SubHeaderProps {
+  theme?: "light" | "dark";
+}
+
+const darkClassReplacements: Record<string, string> = {
+  "bg-white": "bg-zinc-900",
+  "bg-gray-50": "bg-white/5",
+  "bg-gray-50/60": "bg-white/5",
+  "bg-gray-100": "bg-white/10",
+  "bg-gray-200": "bg-white/15",
+  "border-gray-100": "border-white/10",
+  "border-gray-200": "border-white/10",
+  "border-gray-300": "border-white/15",
+  "text-gray-900": "text-white",
+  "text-gray-800": "text-white/80",
+  "text-gray-700": "text-white/70",
+  "text-gray-600": "text-white/60",
+  "text-gray-500": "text-white/50",
+  "text-gray-400": "text-white/40",
+  "text-gray-300": "text-white/30",
+  "text-[#279236]": "text-yellow-400",
+  "bg-[#279236]/10": "bg-yellow-400/15",
+  "bg-[#279236]": "bg-yellow-400",
+  "hover:bg-[#1f7a2b]": "hover:bg-yellow-300",
+  "hover:bg-[#279236]/5": "hover:bg-yellow-400/10",
+  "hover:border-[#279236]/40": "hover:border-yellow-400/40",
+  "focus:ring-[#279236]": "focus:ring-yellow-400/50",
+  "hover:bg-gray-50": "hover:bg-white/10",
+  "hover:bg-gray-100": "hover:bg-white/10",
+  "hover:text-gray-900": "hover:text-white/90",
+  "hover:text-gray-600": "hover:text-white/70",
+  "hover:text-[#279236]": "hover:text-yellow-300",
+};
+
+function applySubHeaderTheme(node: ReactNode): ReactNode {
+  return Children.map(node, (child) => {
+    if (isValidElement<{ className?: string; children?: ReactNode }>(child)) {
+      const className = child.props.className?.replace(
+        /\S+/g,
+        (token) => darkClassReplacements[token] ?? token,
+      );
+
+      return cloneElement(child, {
+        ...(className ? { className } : {}),
+        children: applySubHeaderTheme(child.props.children),
+      });
+    }
+
+    if (
+      typeof child === "object" &&
+      child !== null &&
+      "$$typeof" in child &&
+      child.$$typeof === Symbol.for("react.portal")
+    ) {
+      const portal = child as ReactPortal;
+      return createPortal(
+        applySubHeaderTheme(portal.children),
+        portal.containerInfo,
+        portal.key,
+      );
+    }
+
+    return child;
+  });
+}
+
 const HEALTH_SERVICES = [
   "Vacinas",
   "Teste de COVID",
@@ -25,7 +100,7 @@ const HEALTH_SERVICES = [
   "Dose Certa",
 ];
 
-export default function SubHeader() {
+export default function SubHeader({ theme = "light" }: SubHeaderProps) {
   const [cepModalOpen, setCepModalOpen] = useState(false);
   const [cepInput, setCepInput] = useState("");
   const [currentCep, setCurrentCep] = useState<string | null>(null);
@@ -230,17 +305,19 @@ export default function SubHeader() {
     setHealthServicesOpen((previous) => !previous);
   };
 
-  return (
-    <nav className="w-full bg-white border-b border-gray-200 text-sm relative z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between min-h-[52px] py-2 gap-3 sm:gap-6 min-w-0">
+  const content = (
+    <nav className={`w-full border-b text-sm relative z-40 ${theme === "dark" ? "bg-zinc-900 border-white/10" : "bg-white border-gray-200"}`}>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-[52px] min-w-0 items-center justify-between gap-3 py-2 sm:gap-6">
           {/* Esquerda: Insira seu CEP com Dropdown logo abaixo */}
           <div className="relative shrink-0" ref={cepDropdownRef}>
             <button
               type="button"
               onClick={() => setCepModalOpen((prev) => !prev)}
               aria-expanded={cepModalOpen}
-              className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-700 hover:text-gray-900 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200"
+              className={theme === "dark"
+                ? "flex items-center gap-1.5 rounded-full border border-transparent px-2.5 py-1.5 text-xs text-white/60 transition-colors hover:border-white/15 hover:bg-white/8 hover:text-white/90 sm:text-sm"
+                : "flex items-center gap-1.5 text-xs sm:text-sm text-gray-700 hover:text-gray-900 transition-colors py-1.5 px-2.5 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-200"}
             >
               <MapPin className="h-4 w-4 text-[#279236] shrink-0" />
               <span className="font-medium whitespace-nowrap">
@@ -258,26 +335,29 @@ export default function SubHeader() {
               <div
                 role="dialog"
                 aria-label="Informe seu Cep"
-                className="absolute left-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                className={theme === "dark"
+                  ? "absolute left-0 top-full z-50 mt-2 w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-white/15 bg-zinc-900 p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 sm:w-96"
+                  : "absolute left-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 p-5 z-50 animate-in fade-in zoom-in-95 duration-150"}
               >
                 {/* Seta discreta apontando para o botão */}
-                <div className="absolute -top-1.5 left-7 w-3 h-3 bg-white border-t border-l border-gray-200 rotate-45" />
+                <div className={theme === "dark" ? "absolute -top-1.5 left-7 h-3 w-3 rotate-45 border-l border-t border-white/15 bg-zinc-900" : "absolute -top-1.5 left-7 w-3 h-3 bg-white border-t border-l border-gray-200 rotate-45"} />
 
                 {/* Cabeçalho */}
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-bold text-gray-900 leading-snug">
-                      Informe seu Cep
+                    <h3 className={`text-base font-bold leading-snug ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                      Informe seu {theme === "dark" ? "CEP" : "Cep"}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                      Estoque e tempo de entrega podem variar de acordo com a
-                      região.
+                    <p className={`mt-1 text-xs leading-relaxed ${theme === "dark" ? "text-white/40" : "text-gray-500"}`}>
+                      {theme === "dark"
+                        ? "Estoque e tempo de entrega podem variar por região."
+                        : "Estoque e tempo de entrega podem variar de acordo com a região."}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setCepModalOpen(false)}
-                    className="p-1 -mr-1 -mt-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    className={theme === "dark" ? "-mr-1 -mt-1 rounded-full p-1 text-white/30 transition-colors hover:bg-white/10 hover:text-white/70" : "p-1 -mr-1 -mt-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"}
                     aria-label="Fechar"
                   >
                     <X className="h-4 w-4" />
@@ -288,26 +368,28 @@ export default function SubHeader() {
                 <div className="mt-4">
                   <label
                     htmlFor="cep-input"
-                    className="block text-xs font-semibold text-gray-800 mb-1.5"
+                    className={`mb-1.5 block text-xs font-semibold ${theme === "dark" ? "text-white/70" : "text-gray-800"}`}
                   >
                     Adicione seu CEP
                   </label>
 
                   <form onSubmit={handleSaveCep} className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
+                      <div className={theme === "dark" ? "flex-1" : "relative flex-1"}>
                         <input
-                          id="cep-input"
+                          id={theme === "dark" ? "bw-cep-input" : "cep-input"}
                           type="text"
                           inputMode="numeric"
                           maxLength={9}
                           value={cepInput}
                           onChange={handleCepChange}
-                          placeholder="CEP"
-                          className="w-full px-3.5 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#279236] focus:border-transparent transition-all"
+                          placeholder={theme === "dark" ? "00000-000" : "CEP"}
+                          className={theme === "dark"
+                            ? "w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-sm text-white placeholder-white/25 transition focus:border-yellow-400/40 focus:outline-none focus:ring-2 focus:ring-yellow-400/50"
+                            : "w-full px-3.5 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#279236] focus:border-transparent transition-all"}
                           autoFocus
                         />
-                        {cepInput && (
+                        {cepInput && theme === "light" && (
                           <button
                             type="button"
                             onClick={() => setCepInput("")}
@@ -322,14 +404,16 @@ export default function SubHeader() {
                       <button
                         type="submit"
                         disabled={cepInput.replace(/\D/g, "").length !== 8}
-                        className="px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#279236] hover:bg-[#1f7a2b] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors shrink-0 shadow-sm"
+                        className={theme === "dark"
+                          ? "shrink-0 rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-yellow-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                          : "px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#279236] hover:bg-[#1f7a2b] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors shrink-0 shadow-sm"}
                       >
-                        Inserir
+                        {theme === "dark" ? "OK" : "Inserir"}
                       </button>
                     </div>
 
                     {errorMessage && (
-                      <p className="text-[11px] text-red-600 font-medium">
+                      <p className={`font-medium ${theme === "dark" ? "text-xs text-red-400" : "text-[11px] text-red-600"}`}>
                         {errorMessage}
                       </p>
                     )}
@@ -339,52 +423,58 @@ export default function SubHeader() {
                       type="button"
                       onClick={handleUseLocation}
                       disabled={isLocating}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 hover:border-[#279236]/40 bg-gray-50/60 hover:bg-[#279236]/5 rounded-lg text-xs sm:text-sm font-medium text-[#279236] transition-colors disabled:opacity-60 disabled:cursor-not-allowed group"
+                      className={theme === "dark"
+                        ? "flex items-center gap-2 text-xs font-medium text-yellow-400 transition-colors hover:text-yellow-300 disabled:opacity-50"
+                        : "w-full flex items-center justify-center gap-2 py-2 px-3 border border-gray-200 hover:border-[#279236]/40 bg-gray-50/60 hover:bg-[#279236]/5 rounded-full text-xs sm:text-sm font-medium text-[#279236] transition-colors disabled:opacity-60 disabled:cursor-not-allowed group"}
                     >
                       <Navigation
-                        className={`h-4 w-4 text-[#279236] shrink-0 group-hover:scale-110 transition-transform ${
-                          isLocating ? "animate-spin" : ""
-                        }`}
+                        className={`shrink-0 transition-transform ${theme === "dark" ? "h-3.5 w-3.5" : "h-4 w-4 group-hover:scale-110"} ${theme === "dark" ? "text-yellow-400" : "text-[#279236]"} ${isLocating ? "animate-spin" : ""}`}
                       />
                       <span>
                         {isLocating
                           ? "Buscando sua localização..."
-                          : "Usar minha localização"}
+                          : theme === "dark"
+                            ? "Usar minha localização atual"
+                            : "Usar minha localização"}
                       </span>
                     </button>
                   </form>
 
                   {/* Rodapé informativo */}
-                  <div className="mt-4 pt-3 border-t border-gray-100">
+                  {theme === "light" && <div className="mt-4 pt-3 border-t border-gray-100">
                     <p className="text-[11px] text-gray-400 text-center leading-normal">
                       Confirme o endereço na finalização da compra.
                     </p>
-                  </div>
+                  </div>}
                 </div>
               </div>
             )}
           </div>
 
           {/* Separador vertical */}
-          <div className="h-4 w-px bg-gray-200 shrink-0 hidden sm:block" />
+          <div className={`hidden h-4 w-px shrink-0 sm:block ${theme === "dark" ? "bg-white/10" : "bg-gray-200"}`} />
 
           {/* Meio: Departamentos e Links de Navegação (sem ícones exceto Menu de hambúrguer) */}
-          <div className="flex items-center gap-3 sm:gap-5 md:gap-6 min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1 text-xs sm:text-sm font-medium text-gray-700">
+          <div className={`hidden sm:flex min-w-0 flex-1 overflow-x-auto ${theme === "dark" ? "items-center gap-2 scrollbar-hide justify-center py-1 sm:justify-start text-sm font-medium" : "items-center gap-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1 text-xs sm:text-sm font-medium text-gray-700"}`}>
             {/* Botão Departamentos - somente o ícone de hambúrguer */}
             <button
               type="button"
               onClick={() => setDepartmentModalOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={departmentModalOpen}
-              className="flex items-center gap-1.5 py-1.5 px-3 rounded-full hover:text-[#279236] hover:bg-neutral-100 transition-colors font-semibold text-gray-900 shrink-0"
+              className={theme === "dark"
+                ? "flex shrink-0 items-center gap-1.5 rounded-full border border-transparent px-4 py-2 font-semibold text-white/70 transition-colors hover:border-white/15 hover:bg-white/8 hover:text-white/90"
+                : "flex items-center gap-1.5 py-2 px-4 rounded-full hover:text-[#279236] hover:bg-neutral-100 transition-colors font-semibold text-gray-900 shrink-0"}
             >
-              <Menu className="h-4 w-4 text-gray-700" />
+              <Menu className={`h-4 w-4 shrink-0 ${theme === "dark" ? "text-white/60" : "text-gray-700"}`} />
               <span>Departamentos</span>
             </button>
 
             <Link
               href="/cupons"
-              className="hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+              className={theme === "dark"
+                ? "shrink-0 rounded-full px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/8 hover:text-white/90"
+                : "hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-2 px-4 shrink-0"}
             >
               Cupons
             </Link>
@@ -395,7 +485,9 @@ export default function SubHeader() {
               onClick={handleHealthServicesToggle}
               aria-haspopup="menu"
               aria-expanded={healthServicesOpen}
-              className="flex items-center gap-1 hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+              className={theme === "dark"
+                ? "flex shrink-0 items-center gap-1 rounded-full px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/8 hover:text-white/90"
+                : "flex items-center gap-1 hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-2 px-4 shrink-0"}
             >
               <span>Serviços de Saúde</span>
               <ChevronDown
@@ -406,15 +498,10 @@ export default function SubHeader() {
             </button>
 
             <Link
-              href="/marcas"
-              className="hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
-            >
-              Nossas Marcas
-            </Link>
-
-            <Link
               href="/ofertas"
-              className="hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-1.5 px-3 shrink-0"
+              className={theme === "dark"
+                ? "shrink-0 rounded-full px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/8 hover:text-white/90"
+                : "hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-2 px-4 shrink-0"}
             >
               Ofertas Exclusivas
             </Link>
@@ -422,17 +509,16 @@ export default function SubHeader() {
             {/* Destaque Black Week */}
             <Link
               href="/black-week"
-              className="bg-black hover:bg-zinc-800 text-white text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0"
+              className={`${theme === "dark" ? "bg-yellow-400 text-black hover:bg-yellow-300" : "bg-black hover:bg-zinc-800 text-white"} text-xs px-4 py-2 rounded-full font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap shrink-0`}
             >
               Black Week
             </Link>
-          </div>
 
-          {/* Direita: Primeira Compra Cupom (sem ícone) */}
-          <div className="shrink-0 hidden lg:flex items-center">
             <Link
               href="/cupons#primeira-compra"
-              className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-full transition-colors whitespace-nowrap"
+              className={theme === "dark"
+                ? "shrink-0 rounded-full px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/8 hover:text-white/90"
+                : "text-gray-700 hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-2 px-4 shrink-0"}
             >
               Primeira Compra? Ganhe CUPOM!
             </Link>
@@ -551,4 +637,6 @@ export default function SubHeader() {
         )}
     </nav>
   );
+
+  return theme === "dark" ? applySubHeaderTheme(content) : content;
 }

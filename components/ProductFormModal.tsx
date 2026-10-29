@@ -36,6 +36,7 @@ export default function ProductFormModal({
     product?.department ?? DEPARTMENT_NAMES[0]
   );
   const [category, setCategory] = useState(product?.category ?? "");
+  const [subcategory, setSubcategory] = useState(product?.subcategory ?? "");
   const [brand, setBrand] = useState(product?.brand ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [stock, setStock] = useState(
@@ -154,6 +155,7 @@ export default function ProductFormModal({
         name,
         department,
         category: category || "Geral",
+        subcategory,
         brand,
         description,
         images: allImages,
@@ -263,11 +265,11 @@ export default function ProductFormModal({
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="Nome completo do produto ou medicamento"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase text-gray-700">
                     Departamento
@@ -278,7 +280,7 @@ export default function ProductFormModal({
                     value={department}
                     onChange={(event) => setDepartment(event.target.value)}
                     placeholder="Ex: Medicamentos"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                   <datalist id="department-options">
                     {DEPARTMENT_NAMES.map((departmentName) => (
@@ -299,7 +301,20 @@ export default function ProductFormModal({
                     value={category}
                     onChange={(event) => setCategory(event.target.value)}
                     placeholder="Ex: Analgésicos"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase text-gray-700">
+                    Subcategoria
+                  </label>
+                  <input
+                    type="text"
+                    value={subcategory}
+                    onChange={(event) => setSubcategory(event.target.value)}
+                    placeholder="Ex: Creme para Assadura"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -312,7 +327,7 @@ export default function ProductFormModal({
                     value={brand}
                     onChange={(event) => setBrand(event.target.value)}
                     placeholder="Ex: Medley, EMS, Neoquímica"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
               </div>
@@ -326,7 +341,7 @@ export default function ProductFormModal({
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder="Descrição do produto, posologia e informações gerais..."
-                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
             </div>
@@ -341,7 +356,7 @@ export default function ProductFormModal({
                   value={imageUrlInput}
                   onChange={(event) => setImageUrlInput(event.target.value)}
                   placeholder="https://link-da-imagem.com/foto.jpg"
-                  className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
                 <button
                   type="button"
@@ -396,7 +411,7 @@ export default function ProductFormModal({
                     value={price}
                     onChange={(event) => setPrice(event.target.value)}
                     placeholder="0,00"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -410,7 +425,7 @@ export default function ProductFormModal({
                     value={originalPrice}
                     onChange={(event) => setOriginalPrice(event.target.value)}
                     placeholder="0,00"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -426,7 +441,7 @@ export default function ProductFormModal({
                       setInstallmentPrice(event.target.value)
                     }
                     placeholder="0,00"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -437,7 +452,7 @@ export default function ProductFormModal({
                   <select
                     value={installments}
                     onChange={(event) => setInstallments(event.target.value)}
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   >
                     {[1, 2, 3, 4, 5, 6, 10, 12].map((times) => (
                       <option key={times} value={times}>
@@ -459,7 +474,7 @@ export default function ProductFormModal({
                   value={variationName}
                   onChange={(event) => setVariationName(event.target.value)}
                   placeholder="Nome (ex: 500mg, 100ml)"
-                  className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 sm:col-span-2"
+                  className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236] sm:col-span-2"
                 />
                 <div className="flex gap-2">
                   <input
@@ -468,7 +483,7 @@ export default function ProductFormModal({
                     value={variationPrice}
                     onChange={(event) => setVariationPrice(event.target.value)}
                     placeholder="Preço"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                   <button
                     type="button"
@@ -519,7 +534,7 @@ export default function ProductFormModal({
                     value={ean}
                     onChange={(event) => setEan(event.target.value)}
                     placeholder="Código de barras"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -532,7 +547,7 @@ export default function ProductFormModal({
                     value={sku}
                     onChange={(event) => setSku(event.target.value)}
                     placeholder="Código interno"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -547,7 +562,7 @@ export default function ProductFormModal({
                       setCategoriaProdutos(event.target.value)
                     }
                     placeholder="Ex: Medicamento Similar"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -560,7 +575,7 @@ export default function ProductFormModal({
                     value={genero}
                     onChange={(event) => setGenero(event.target.value)}
                     placeholder="Unissex, Infantil, Adulto..."
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -573,7 +588,7 @@ export default function ProductFormModal({
                     value={tipoProduto}
                     onChange={(event) => setTipoProduto(event.target.value)}
                     placeholder="Comprimido, Gotas, Pomada..."
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -586,7 +601,7 @@ export default function ProductFormModal({
                     value={tipoEmbalagem}
                     onChange={(event) => setTipoEmbalagem(event.target.value)}
                     placeholder="Blíster, Caixa, Frasco..."
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -599,7 +614,7 @@ export default function ProductFormModal({
                     value={fabricante}
                     onChange={(event) => setFabricante(event.target.value)}
                     placeholder="Laboratório / Fabricante"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
 
@@ -612,7 +627,7 @@ export default function ProductFormModal({
                     value={linha}
                     onChange={(event) => setLinha(event.target.value)}
                     placeholder="Linha do produto"
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                   />
                 </div>
               </div>
@@ -626,7 +641,7 @@ export default function ProductFormModal({
                   value={composicao}
                   onChange={(event) => setComposicao(event.target.value)}
                   placeholder="Composição e princípios ativos..."
-                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
@@ -639,7 +654,7 @@ export default function ProductFormModal({
                   value={indicacoesUso}
                   onChange={(event) => setIndicacoesUso(event.target.value)}
                   placeholder="Indicações terapêuticas ou uso..."
-                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
@@ -652,7 +667,7 @@ export default function ProductFormModal({
                   value={modoUso}
                   onChange={(event) => setModoUso(event.target.value)}
                   placeholder="Modo de administração ou uso..."
-                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
             </div>
@@ -666,7 +681,7 @@ export default function ProductFormModal({
                   type="number"
                   value={stock}
                   onChange={(event) => setStock(event.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
 
@@ -675,7 +690,7 @@ export default function ProductFormModal({
                   type="checkbox"
                   checked={isFeatured}
                   onChange={(event) => setIsFeatured(event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                  className="h-4 w-4 rounded border-gray-300 text-[#279236]"
                 />
                 <span>Destacar na Vitrine Principal</span>
               </label>
@@ -693,7 +708,7 @@ export default function ProductFormModal({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-70"
+              className="rounded-lg bg-[#279236] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:opacity-70"
             >
               {submitting
                 ? "Salvando..."

@@ -28,6 +28,7 @@ export interface Product {
   slug: string;
   department?: string; // Departamento
   category?: string; // Categoria
+  subcategory?: string; // Subcategoria
   brand?: string; // Marca
   images: string[]; // Array de URLs de imagens
   options: ProductVariation[]; // Variações / Opções
@@ -52,6 +53,7 @@ export interface CreateProductInput {
   slug?: string;
   department?: string;
   category?: string;
+  subcategory?: string;
   brand?: string;
   images: string[];
   options?: ProductVariation[];

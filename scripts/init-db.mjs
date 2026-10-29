@@ -18,6 +18,7 @@ async function init() {
 
   // Extensão pgcrypto para UUID caso não exista
   await client.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+  await client.query(`CREATE EXTENSION IF NOT EXISTS "pg_trgm";`);
 
   // Tabela de Usuários
   await client.query(`
@@ -43,11 +44,28 @@ async function init() {
       original_price NUMERIC(10, 2),
       image_url TEXT,
       category VARCHAR(100),
+      subcategory VARCHAR(100),
       stock INTEGER DEFAULT 100,
       is_featured BOOLEAN DEFAULT false,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
+  `);
+
+  await client.query(`ALTER TABLE public.products ADD COLUMN IF NOT EXISTS subcategory VARCHAR(100);`);
+
+  // Acelera a busca parcial (ILIKE '%termo%') usada no autocomplete.
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS products_name_trgm_idx
+      ON public.products USING GIN (name gin_trgm_ops);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS products_description_trgm_idx
+      ON public.products USING GIN (description gin_trgm_ops);
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS products_brand_trgm_idx
+      ON public.products USING GIN (brand gin_trgm_ops);
   `);
 
   // Tabela de Sessões
@@ -69,7 +87,8 @@ async function init() {
       description TEXT,
       discount_type VARCHAR(20) NOT NULL DEFAULT 'percentage'
         CHECK (discount_type IN ('percentage', 'fixed')),
-      discount_value NUMERIC(10, 2) NOT NULL CHECK (discount_value > 0),
+      free_shipping BOOLEAN NOT NULL DEFAULT FALSE,
+      discount_value NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (discount_value > 0 OR free_shipping = TRUE),
       min_purchase NUMERIC(10, 2) NOT NULL DEFAULT 0,
       max_discount NUMERIC(10, 2),
       usage_limit INTEGER,

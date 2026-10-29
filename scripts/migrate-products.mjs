@@ -19,6 +19,7 @@ async function migrate() {
     ALTER TABLE public.products 
     ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT '{}',
     ADD COLUMN IF NOT EXISTS department VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS subcategory VARCHAR(100),
     ADD COLUMN IF NOT EXISTS brand VARCHAR(100),
     ADD COLUMN IF NOT EXISTS options JSONB DEFAULT '[]'::jsonb,
     ADD COLUMN IF NOT EXISTS specifications JSONB DEFAULT '{}'::jsonb,

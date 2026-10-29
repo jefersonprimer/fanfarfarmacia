@@ -20,6 +20,7 @@ export function normalizeCoupon(row: Record<string, unknown>): Coupon {
       row.max_discount === null || row.max_discount === undefined
         ? null
         : Number(row.max_discount),
+    free_shipping: Boolean(row.free_shipping),
     usage_limit:
       row.usage_limit === null || row.usage_limit === undefined
         ? null

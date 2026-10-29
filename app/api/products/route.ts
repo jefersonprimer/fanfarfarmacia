@@ -3,7 +3,7 @@ import { query } from "@/lib/db";
 import { withProductPromotions } from "@/lib/promotions-server";
 import { CreateProductInput } from "@/types/product";
 
-// GET /api/products?search=...&category=...&department=...&brand=...
+// GET /api/products?search=...&category=...&department=...&brand=...&limit=20&offset=0
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -11,14 +11,57 @@ export async function GET(request: Request) {
     const category = searchParams.get("category");
     const department = searchParams.get("department");
     const brand = searchParams.get("brand");
+    const suggestions = searchParams.get("suggestions") === "1";
 
-    let sql = `
-      SELECT 
+    const parsedLimit = searchParams.get("limit")
+      ? Number.parseInt(searchParams.get("limit") as string, 10)
+      : null;
+    const limit =
+      parsedLimit !== null && Number.isFinite(parsedLimit)
+        ? Math.min(Math.max(parsedLimit, 1), 100)
+        : null;
+    const parsedOffset = searchParams.get("offset")
+      ? Number.parseInt(searchParams.get("offset") as string, 10)
+      : 0;
+    const offset = Number.isFinite(parsedOffset) && parsedOffset > 0
+      ? parsedOffset
+      : 0;
+
+    const filters = ["1=1"];
+    const params: any[] = [];
+
+    if (search) {
+      params.push(`%${search}%`);
+      filters.push(
+        `(name ILIKE $${params.length} OR description ILIKE $${params.length} OR brand ILIKE $${params.length})`
+      );
+    }
+
+    if (category) {
+      params.push(category);
+      filters.push(`category = $${params.length}`);
+    }
+
+    if (department) {
+      params.push(department);
+      filters.push(`department = $${params.length}`);
+    }
+
+    if (brand) {
+      params.push(brand);
+      filters.push(`brand = $${params.length}`);
+    }
+
+    const whereClause = filters.join(" AND ");
+
+    const selectSql = `
+      SELECT
         id,
         name,
         slug,
         department,
         category,
+        subcategory,
         brand,
         COALESCE(images, ARRAY[image_url]) as images,
         COALESCE(options, '[]'::jsonb) as options,
@@ -32,37 +75,43 @@ export async function GET(request: Request) {
         is_featured,
         created_at,
         updated_at
-      FROM public.products 
-      WHERE 1=1
+      FROM public.products
+      WHERE ${whereClause}
+      ORDER BY created_at DESC, id DESC
     `;
-    const params: any[] = [];
 
-    if (search) {
-      params.push(`%${search}%`);
-      sql += ` AND (name ILIKE $${params.length} OR description ILIKE $${params.length} OR brand ILIKE $${params.length})`;
+    if (limit !== null) {
+      const rows = await query(
+        `${selectSql} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, limit + 1, offset]
+      );
+      const hasMore = rows.length > limit;
+      const pageRows = hasMore ? rows.slice(0, limit) : rows;
+
+      const countRows = suggestions
+        ? null
+        : await query<{ count: number }>(
+            `SELECT COUNT(*)::int AS count FROM public.products WHERE ${whereClause}`,
+            params
+          );
+
+      const productsWithPromotions = await withProductPromotions(pageRows);
+
+      return NextResponse.json({
+        products: productsWithPromotions,
+        total: countRows ? Number(countRows[0]?.count ?? pageRows.length) : null,
+        hasMore,
+      });
     }
 
-    if (category) {
-      params.push(category);
-      sql += ` AND category = $${params.length}`;
-    }
-
-    if (department) {
-      params.push(department);
-      sql += ` AND department = $${params.length}`;
-    }
-
-    if (brand) {
-      params.push(brand);
-      sql += ` AND brand = $${params.length}`;
-    }
-
-    sql += " ORDER BY created_at DESC";
-
-    const products = await query(sql, params);
+    const products = await query(selectSql, params);
     const productsWithPromotions = await withProductPromotions(products);
 
-    return NextResponse.json({ products: productsWithPromotions });
+    return NextResponse.json({
+      products: productsWithPromotions,
+      total: products.length,
+      hasMore: false,
+    });
   } catch (error: any) {
     console.error("Erro ao buscar produtos:", error);
     return NextResponse.json(
@@ -81,6 +130,7 @@ export async function POST(request: Request) {
       slug,
       department,
       category,
+      subcategory,
       brand,
       images = [],
       options = [],
@@ -122,6 +172,7 @@ export async function POST(request: Request) {
         slug,
         department,
         category,
+        subcategory,
         brand,
         images,
         image_url,
@@ -134,13 +185,14 @@ export async function POST(request: Request) {
         installments,
         stock,
         is_featured
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *`,
       [
         name,
         productSlug,
         department || "Medicamentos",
         category || "Geral",
+        subcategory || "",
         brand || "",
         images,
         mainImageUrl,

@@ -1,6 +1,7 @@
 export interface Department {
   name: string;
   categories: string[];
+  subcategories?: Record<string, string[]>;
 }
 
 export const DEPARTMENTS: Department[] = [
@@ -49,6 +50,13 @@ export const DEPARTMENTS: Department[] = [
       "Cuidados Bucais",
       "Absorventes",
     ],
+  },
+  {
+    name: "Infantil e Gestante",
+    categories: ["Troca de Fralda"],
+    subcategories: {
+      "Troca de Fralda": ["Creme para Assadura"],
+    },
   },
   {
     name: "Mamãe e Bebê",

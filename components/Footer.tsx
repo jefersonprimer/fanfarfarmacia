@@ -5,6 +5,7 @@ import { STORE_SETTINGS } from "@/lib/pharmacy";
 import { categoryPath } from "@/lib/catalog";
 import { InstagramIcon } from "@/components/InstagramIcon";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
+import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 
 const settings = STORE_SETTINGS;
 
@@ -38,24 +39,84 @@ const paymentMethods = [
   { name: "Pix", src: "/payments/pix.svg" },
 ];
 
-export default function Footer() {
-  return (
+interface FooterProps {
+  theme?: "light" | "dark";
+}
+
+const darkClassReplacements: Record<string, string> = {
+  "bg-white": "bg-black",
+  "bg-gray-100": "bg-white/8",
+  "bg-gray-200": "bg-white/15",
+  "bg-neutral-100": "bg-black/40",
+  "border-gray-200": "border-white/10",
+  "border-gray-100": "border-white/10",
+  "border-neutral-200": "border-white/8",
+  "text-slate-600": "text-white/60",
+  "text-slate-500": "text-white/40",
+  "text-gray-900": "text-white/90",
+  "text-gray-800": "text-white/80",
+  "text-gray-600": "text-white/50",
+  "text-gray-500": "text-white/25",
+  "text-gray-400": "text-white/30",
+  "text-neutral-600": "text-white/25",
+  "text-neutral-800": "text-white/30",
+  "text-neutral-900": "text-white/40",
+  "text-blue-600": "text-yellow-400/70",
+  "text-emerald-50": "text-white/60",
+  "text-emerald-100/90": "text-white/40",
+  "text-emerald-700": "text-white",
+  "from-emerald-700": "from-emerald-900/60",
+  "to-emerald-600": "to-emerald-800/40",
+  "hover:bg-emerald-50": "hover:bg-emerald-400",
+  "hover:bg-emerald-600": "hover:bg-emerald-500",
+  "hover:bg-gray-200": "hover:bg-white/15",
+  "hover:text-gray-900": "hover:text-white/90",
+  "hover:text-blue-600": "hover:text-yellow-300",
+};
+
+function applyFooterTheme(node: ReactNode): ReactNode {
+  return Children.map(node, (child) => {
+    if (!isValidElement<{ className?: string; children?: ReactNode }>(child))
+      return child;
+
+    const className = child.props.className?.replace(
+      /\S+/g,
+      (token) => darkClassReplacements[token] ?? token,
+    );
+
+    return cloneElement(child, {
+      ...(className ? { className } : {}),
+      children: applyFooterTheme(child.props.children),
+    });
+  });
+}
+
+export default function Footer({ theme = "light" }: FooterProps) {
+  const footerNavLinks = theme === "dark"
+    ? [
+        ...navLinks.slice(0, 3).map((link) => ({ ...link, highlight: false })),
+        { label: "Black Week — 20% OFF", href: "/black-week", highlight: true },
+        ...navLinks.slice(3).map((link) => ({ ...link, highlight: false })),
+      ]
+    : navLinks;
+
+  const content = (
     <>
       <section className="bg-white px-4 pb-10 pt-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-6 rounded-3xl bg-gradient-to-r from-emerald-700 to-emerald-600 px-6 py-7 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <div className="flex items-start gap-4 sm:items-center">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white">
+              <div className={theme === "dark" ? "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400" : "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white"}>
                 <WhatsAppIcon className="h-7 w-7" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white sm:text-xl">
                   Tire suas dúvidas por WhatsApp
                 </h2>
-                <p className="mt-1 text-sm font-medium text-emerald-50">
+                <p className={theme === "dark" ? "mt-1 text-sm font-medium text-white/60" : "mt-1 text-sm font-medium text-emerald-50"}>
                   Atendimento 24 horas por dia, todos os dias.
                 </p>
-                <p className="text-xs text-emerald-100/90">
+                <p className={theme === "dark" ? "text-xs text-white/40" : "text-xs text-emerald-100/90"}>
                   Atendentes disponíveis das 07h às 23h.
                 </p>
               </div>
@@ -65,7 +126,7 @@ export default function Footer() {
               href={`https://wa.me/${settings.whatsappNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
+              className={theme === "dark" ? "inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 active:scale-95" : "inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"}
             >
               <WhatsAppIcon className="h-4 w-4" />
               Acessar WhatsApp
@@ -80,13 +141,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-12">
           {/* Brand Info & Mission */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2.5">
+            <Link href="/" className={`inline-flex items-center ${theme === "dark" ? "gap-3" : "gap-2.5"}`}>
               <Image
-                src="/logo-name.png"
-                alt="Fanfar Farmácias"
-                width={160}
-                height={50}
-                className="h-10 sm:h-12 w-auto object-contain"
+                src={theme === "dark" ? "/Black Week Fanfar Pharmacy Banner.png" : "/logo-name.png"}
+                alt={theme === "dark" ? "Black Week Fanfar Farmácia" : "Fanfar Farmácias"}
+                width={theme === "dark" ? 220 : 160}
+                height={theme === "dark" ? 78 : 50}
+                className={theme === "dark" ? "h-12 sm:h-14 w-auto object-contain" : "h-10 sm:h-12 w-auto object-contain"}
               />
             </Link>
 
@@ -112,7 +173,7 @@ export default function Footer() {
                 href={`https://wa.me/${settings.whatsappNumber}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-emerald-700 hover:bg-emerald-600 flex items-center justify-center text-white transition-colors"
+                className={theme === "dark" ? "flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600/30 text-emerald-400 transition-colors hover:bg-emerald-600/50" : "w-9 h-9 rounded-lg bg-emerald-700 hover:bg-emerald-600 flex items-center justify-center text-white transition-colors"}
                 title="WhatsApp Oficial"
                 aria-label="WhatsApp"
               >
@@ -123,18 +184,22 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-white/30" : "text-gray-900"}`}>
               Navegação
             </h4>
             <ul className="space-y-2 text-xs">
-              {navLinks.map((link) => (
+              {footerNavLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     className={`transition-colors hover:text-blue-600 ${
                       link.highlight
-                        ? "text-amber-500 font-medium"
-                        : "text-gray-600"
+                        ? theme === "dark"
+                          ? "font-bold text-yellow-400 hover:text-yellow-300"
+                          : "text-amber-500 font-medium"
+                        : theme === "dark"
+                          ? "text-white/50 hover:text-white/90"
+                          : "text-gray-600"
                     }`}
                   >
                     {link.label}
@@ -146,7 +211,7 @@ export default function Footer() {
 
           {/* Contact & Hours */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-white/30" : "text-gray-900"}`}>
               Atendimento em FW
             </h4>
             <div className="space-y-2.5 text-xs text-gray-600">
@@ -180,7 +245,7 @@ export default function Footer() {
 
           {/* Legal & Institutional */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-white/30" : "text-gray-900"}`}>
               Institucional & LGPD
             </h4>
             <ul className="space-y-2 text-xs text-gray-600">
@@ -201,7 +266,7 @@ export default function Footer() {
         {/* Payment Methods */}
         <div className="flex flex-col gap-4 border-t border-gray-100 py-8 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">
+            <h2 className={`text-sm font-bold ${theme === "dark" ? "text-white/80" : "text-gray-900"}`}>
               Formas de pagamento
             </h2>
             <p className="mt-1 text-xs text-gray-500">
@@ -218,7 +283,7 @@ export default function Footer() {
                   width={48}
                   height={32}
                   unoptimized
-                  className="h-8 w-12 object-contain"
+                  className={`h-8 w-12 object-contain ${theme === "dark" ? "opacity-60 grayscale invert transition hover:opacity-100 hover:grayscale-0" : ""}`}
                 />
               </li>
             ))}
@@ -267,7 +332,9 @@ export default function Footer() {
           </p>
         </div>
       </div>
-    </footer>
+      </footer>
     </>
   );
+
+  return theme === "dark" ? applyFooterTheme(content) : content;
 }

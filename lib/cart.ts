@@ -91,6 +91,7 @@ function readCouponFromStorage(): AppliedCoupon | null {
         typeof candidate.max_discount === "number"
           ? candidate.max_discount
           : null,
+      free_shipping: candidate.free_shipping === true,
     };
   } catch {
     return null;

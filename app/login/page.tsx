@@ -31,7 +31,8 @@ export default function LoginPage() {
         throw new Error(data.error || "Falha ao entrar na conta.");
       }
 
-      router.push("/");
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next?.startsWith("/") && !next.startsWith("//") ? next : "/");
       router.refresh();
     } catch (err: any) {
       setError(err.message);

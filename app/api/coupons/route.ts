@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizeCoupon } from "@/lib/coupons";
 import type { CouponInput } from "@/types/coupon";
+import { ensureCouponShippingColumn } from "@/lib/coupons-server";
 
 function normalizeCode(value: string) {
   return value.trim().toUpperCase().replace(/\s+/g, "");
@@ -10,6 +11,7 @@ function normalizeCode(value: string) {
 
 export async function GET(request: Request) {
   try {
+    await ensureCouponShippingColumn();
     const { searchParams } = new URL(request.url);
     const user = await getCurrentUser();
     const showAll = user?.role === "admin" && searchParams.get("all") === "1";
@@ -40,6 +42,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await ensureCouponShippingColumn();
     const user = await getCurrentUser();
 
     if (!user || user.role !== "admin") {
@@ -53,6 +56,7 @@ export async function POST(request: Request) {
     const code = normalizeCode(body.code ?? "");
     const discountType = body.discount_type;
     const discountValue = Number(body.discount_value);
+    const freeShipping = body.free_shipping === true;
 
     if (!code) {
       return NextResponse.json(
@@ -68,7 +72,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!Number.isFinite(discountValue) || discountValue <= 0) {
+    if (!Number.isFinite(discountValue) || discountValue < 0 || (discountValue === 0 && !freeShipping)) {
       return NextResponse.json(
         { error: "Informe um valor de desconto válido." },
         { status: 400 }
@@ -90,11 +94,12 @@ export async function POST(request: Request) {
         discount_value,
         min_purchase,
         max_discount,
+        free_shipping,
         usage_limit,
         starts_at,
         expires_at,
         active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, NOW()), $9, $10)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, NOW()), $10, $11)
       RETURNING *`,
       [
         code,
@@ -103,6 +108,7 @@ export async function POST(request: Request) {
         discountValue,
         Number(body.min_purchase) || 0,
         body.max_discount ? Number(body.max_discount) : null,
+        body.free_shipping ?? false,
         body.usage_limit ? Number(body.usage_limit) : null,
         body.starts_at ? new Date(body.starts_at) : null,
         body.expires_at ? new Date(body.expires_at) : null,

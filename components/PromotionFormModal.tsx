@@ -14,7 +14,7 @@ interface PromotionFormModalProps {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600";
+  "w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]";
 
 const SCOPE_OPTIONS: { value: PromotionScope; label: string }[] = [
   { value: "store", label: "Loja inteira" },
@@ -360,7 +360,7 @@ export default function PromotionFormModal({
             </div>
 
             {scope === "store" ? (
-              <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs font-medium text-blue-800">
+              <p className="rounded-lg border border-[#279236]/20 bg-[#279236]/5 px-3 py-2.5 text-xs font-medium text-[#1f7a2b]">
                 A promoção será aplicada automaticamente a todos os produtos da
                 loja.
               </p>
@@ -376,7 +376,7 @@ export default function PromotionFormModal({
                       value={targetSearch}
                       onChange={(event) => setTargetSearch(event.target.value)}
                       placeholder="Buscar..."
-                      className="w-40 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className="w-40 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#279236]"
                     />
                   )}
                 </div>
@@ -394,7 +394,7 @@ export default function PromotionFormModal({
                             type="checkbox"
                             checked={isTargetSelected(option.value)}
                             onChange={() => toggleTarget(option.value)}
-                            className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
+                            className="h-4 w-4 shrink-0 rounded border-gray-300 accent-[#279236]"
                           />
                           <span className="truncate">{option.label}</span>
                         </label>
@@ -546,7 +546,7 @@ export default function PromotionFormModal({
                   onChange={(event) =>
                     setCombinableWithCoupon(event.target.checked)
                   }
-                  className="h-4 w-4 rounded border-gray-300 accent-blue-600"
+                  className="h-4 w-4 rounded border-gray-300 accent-[#279236]"
                 />
                 <span>Permitir acumular com cupom de desconto</span>
               </label>
@@ -556,7 +556,7 @@ export default function PromotionFormModal({
                   type="checkbox"
                   checked={active}
                   onChange={(event) => setActive(event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 accent-blue-600"
+                  className="h-4 w-4 rounded border-gray-300 accent-[#279236]"
                 />
                 <span>Promoção ativa</span>
               </label>
@@ -574,7 +574,7 @@ export default function PromotionFormModal({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-70"
+              className="rounded-lg bg-[#279236] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:opacity-70"
             >
               {submitting
                 ? "Salvando..."

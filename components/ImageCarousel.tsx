@@ -95,7 +95,7 @@ export default function ImageCarousel({
               src={image.src}
               alt={image.alt}
               fill
-              priority={index === 0}
+              preload={index === 0}
               sizes="(max-width: 1280px) 100vw, 1280px"
               className="object-cover"
             />
@@ -114,7 +114,7 @@ export default function ImageCarousel({
                 <Link
                   href={image.href}
                   tabIndex={isActive ? 0 : -1}
-                  className="block h-full w-full"
+                  className="relative block h-full w-full"
                 >
                   {imageElement}
                 </Link>

@@ -22,7 +22,8 @@ async function init() {
       description TEXT,
       discount_type VARCHAR(20) NOT NULL DEFAULT 'percentage'
         CHECK (discount_type IN ('percentage', 'fixed')),
-      discount_value NUMERIC(10, 2) NOT NULL CHECK (discount_value > 0),
+      free_shipping BOOLEAN NOT NULL DEFAULT FALSE,
+      discount_value NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (discount_value > 0 OR free_shipping = TRUE),
       min_purchase NUMERIC(10, 2) NOT NULL DEFAULT 0,
       max_discount NUMERIC(10, 2),
       usage_limit INTEGER,

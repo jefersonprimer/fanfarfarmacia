@@ -3,13 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ChevronRight,
-  Filter,
-  Package,
-  RotateCcw,
-  X,
-} from "lucide-react";
+import { ChevronRight, Filter, Package, RotateCcw, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { DEPARTMENTS } from "@/lib/departments";
 import {
@@ -28,11 +22,15 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 interface CatalogViewProps {
   departmentSlug?: string;
   categorySlug?: string;
+  subcategorySlug?: string;
+  brandSlug?: string;
 }
 
 export default function CatalogView({
   departmentSlug,
   categorySlug,
+  subcategorySlug,
+  brandSlug,
 }: CatalogViewProps) {
   const router = useRouter();
 
@@ -84,7 +82,7 @@ export default function CatalogView({
 
   const configDepartment = useMemo(
     () => (departmentSlug ? findDepartmentBySlug(departmentSlug) : null),
-    [departmentSlug]
+    [departmentSlug],
   );
 
   const departmentName = configDepartment?.name ?? null;
@@ -93,7 +91,7 @@ export default function CatalogView({
     if (!departmentSlug) return products;
 
     return products.filter(
-      (product) => slugify(product.department ?? "") === departmentSlug
+      (product) => slugify(product.department ?? "") === departmentSlug,
     );
   }, [products, departmentSlug]);
 
@@ -107,12 +105,22 @@ export default function CatalogView({
 
     return (
       baseProducts.find(
-        (product) => slugify(product.category ?? "") === categorySlug
+        (product) => slugify(product.category ?? "") === categorySlug,
       )?.category ?? null
     );
   }, [categorySlug, departmentName, baseProducts]);
 
+  const brandName = useMemo(
+    () =>
+      products
+        .find((product) => slugify(product.brand?.trim() ?? "") === brandSlug)
+        ?.brand?.trim() ?? null,
+    [products, brandSlug],
+  );
+
   const pageTitle =
+    brandName ??
+    (subcategorySlug ? titleFromSlug(subcategorySlug) : null) ??
     categoryName ??
     departmentName ??
     (categorySlug
@@ -169,18 +177,42 @@ export default function CatalogView({
   }, [baseProducts]);
 
   const categoryProducts = useMemo(() => {
+    if (brandSlug) {
+      return baseProducts.filter(
+        (product) => slugify(product.brand?.trim() ?? "") === brandSlug,
+      );
+    }
     if (!categorySlug) return baseProducts;
 
     return baseProducts.filter(
-      (product) => slugify(product.category ?? "") === categorySlug
+      (product) => slugify(product.category ?? "") === categorySlug,
     );
-  }, [baseProducts, categorySlug]);
+  }, [baseProducts, categorySlug, brandSlug]);
+
+  const subcategories = useMemo(() => {
+    if (!categorySlug) return [];
+    const names = new Set<string>();
+    const department = DEPARTMENTS.find((item) => item.name === departmentName);
+    if (categoryName)
+      department?.subcategories?.[categoryName]?.forEach((name) =>
+        names.add(name),
+      );
+    categoryProducts.forEach((product) => {
+      if (product.subcategory) names.add(product.subcategory);
+    });
+    return [...names];
+  }, [categorySlug, departmentName, categoryName, categoryProducts]);
 
   const filteredProducts = useMemo(() => {
     const min = priceMin.trim() === "" ? null : Number(priceMin);
     const max = priceMax.trim() === "" ? null : Number(priceMax);
 
     return categoryProducts.filter((product) => {
+      if (
+        subcategorySlug &&
+        slugify(product.subcategory ?? "") !== subcategorySlug
+      )
+        return false;
       const brand = product.brand?.trim() ?? "";
 
       if (selectedBrands.length > 0 && !selectedBrands.includes(brand)) {
@@ -214,6 +246,7 @@ export default function CatalogView({
     });
   }, [
     categoryProducts,
+    subcategorySlug,
     selectedBrands,
     priceMin,
     priceMax,
@@ -236,7 +269,7 @@ export default function CatalogView({
     setSelectedBrands((previous) =>
       previous.includes(brand)
         ? previous.filter((item) => item !== brand)
-        : [...previous, brand]
+        : [...previous, brand],
     );
   };
 
@@ -259,13 +292,16 @@ export default function CatalogView({
           aria-label="Breadcrumb"
           className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500"
         >
-          <Link href="/" className="transition-colors hover:text-blue-600">
+          <Link
+            href="/"
+            className="transition-colors hover:text-[#1f7a2b] hover:underline"
+          >
             Início
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
           <Link
             href="/departamento"
-            className="transition-colors hover:text-blue-600"
+            className="transition-colors hover:text-[#1f7a2b] hover:underline"
           >
             Departamento
           </Link>
@@ -276,12 +312,12 @@ export default function CatalogView({
               {categorySlug ? (
                 <Link
                   href={currentDepartmentPath}
-                  className="transition-colors hover:text-blue-600"
+                  className="transition-colors hover:text-[#1f7a2b] hover:underline"
                 >
                   {departmentName ?? titleFromSlug(departmentSlug)}
                 </Link>
               ) : (
-                <span className="font-medium text-gray-700">
+                <span className="font-medium hover:text-[#1f7a2b] hover:underline cursor-pointer">
                   {departmentName ?? titleFromSlug(departmentSlug)}
                 </span>
               )}
@@ -291,7 +327,7 @@ export default function CatalogView({
           {categorySlug && (
             <>
               <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-              <span className="font-medium text-gray-700">
+              <span className="font-medium hover:text-[#1f7a2b] hover:underline">
                 {categoryName ?? titleFromSlug(categorySlug)}
               </span>
             </>
@@ -374,8 +410,7 @@ export default function CatalogView({
                     </Link>
                   </li>
                   {departments.map((department) => {
-                    const isActive =
-                      slugify(department) === departmentSlug;
+                    const isActive = slugify(department) === departmentSlug;
 
                     return (
                       <li key={department}>
@@ -431,6 +466,26 @@ export default function CatalogView({
                         </li>
                       );
                     })}
+                  </ul>
+                </div>
+              )}
+
+              {categorySlug && subcategories.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Subcategorias
+                  </h3>
+                  <ul className="space-y-0.5">
+                    {subcategories.map((subcategory) => (
+                      <li key={subcategory}>
+                        <Link
+                          href={`${currentDepartmentPath}/${categorySlug}/${slugify(subcategory)}`}
+                          className={`block rounded-lg px-2.5 py-1.5 text-sm ${slugify(subcategory) === subcategorySlug ? "bg-blue-50 font-semibold text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          {subcategory}
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
@@ -513,9 +568,7 @@ export default function CatalogView({
                     <input
                       type="checkbox"
                       checked={onlyInStock}
-                      onChange={(event) =>
-                        setOnlyInStock(event.target.checked)
-                      }
+                      onChange={(event) => setOnlyInStock(event.target.checked)}
                       className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
                     />
                     <span>Somente em estoque</span>

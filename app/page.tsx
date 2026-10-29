@@ -8,15 +8,38 @@ import HomeBenefits from "@/components/HomeBenefits";
 import ImageCarousel, { type CarouselImage } from "@/components/ImageCarousel";
 import ProductCarousel from "@/components/ProductCarousel";
 import type { Product } from "@/types/product";
+import SubHeader from "@/components/SubHeader";
 
 const HOME_BANNERS: CarouselImage[] = [
   {
-    src: "https://topsortassets.com/asset_01m5v0rz45ez6r99fqsa717mj0.jpeg",
-    alt: "Pequenos cuidados, grandes descontos",
+    src: "/banners/Esquenta Black Ofertas Banner.png",
+    alt: "Esquenta Black Ofertas",
+    href: "/ofertas",
   },
   {
-    src: "https://topsortassets.com/asset_01m5v0snf8erz92smq3dd1ffa5.jpeg",
-    alt: "Black Drogasil: baixe o app e aproveite ofertas exclusivas",
+    src: "/banners/esquenta-black-fanfar-ofertas-70-off.png",
+    alt: "Esquenta Black Fanfar Ofertas até 70% OF",
+    href: "/ofertas",
+  },
+  {
+    src: "/banners/Fanfar Green Sunscreen Sale Banner.png",
+    alt: "Produtos de proteção solar ate 70% de desconto",
+    href: "/ofertas",
+  },
+  {
+    src: "/banners/Fanfar Infantil_ Ofertas em Verde.png",
+    alt: "Produtos infantil ate 50% off",
+    href: "/ofertas",
+  },
+  {
+    src: "/banners/Mantenha Seu Tratamento com Desconto.png",
+    alt: "Mantenha Seu Tratamento com Desconto ate 75% off",
+    href: "/ofertas",
+  },
+  {
+    src: "/banners/Green Bath & Wellness Sale.png",
+    alt: "Green Bath & Wellness Sale",
+    href: "/ofertas",
   },
 ];
 
@@ -25,7 +48,7 @@ const HOME_CATEGORIES: StoreCategory[] = [
     name: "Infantil",
     image:
       "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_3/all/20260720153500_6a35a4c6c6a9734f6559becd_0/mrtk246825h6jc.webp",
-    href: "/departamento/mamae-e-bebe",
+    href: "/departamento/infantil-e-gestante",
   },
   {
     name: "Protetor Solar",
@@ -187,6 +210,7 @@ export default function Home() {
 
   return (
     <main className="flex-1 bg-gray-50">
+      <SubHeader />
       <section className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <ImageCarousel images={HOME_BANNERS} />

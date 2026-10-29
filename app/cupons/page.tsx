@@ -66,7 +66,7 @@ async function fetchCouponsData() {
   const currentUser: UserData | null = meData.user ?? null;
 
   const response = await fetch(
-    currentUser?.role === "admin" ? "/api/coupons?all=1" : "/api/coupons"
+    currentUser?.role === "admin" ? "/api/coupons?all=1" : "/api/coupons",
   );
   const data = response.ok ? await response.json() : { coupons: [] };
 
@@ -154,8 +154,8 @@ export default function CouponsPage() {
         setCoupons(data.coupons);
         setStatuses(
           Object.fromEntries(
-            data.coupons.map((coupon) => [coupon.id, getCouponStatus(coupon)])
-          )
+            data.coupons.map((coupon) => [coupon.id, getCouponStatus(coupon)]),
+          ),
         );
       })
       .catch((error) => console.error(error))
@@ -175,8 +175,8 @@ export default function CouponsPage() {
       setCoupons(data.coupons);
       setStatuses(
         Object.fromEntries(
-          data.coupons.map((coupon) => [coupon.id, getCouponStatus(coupon)])
-        )
+          data.coupons.map((coupon) => [coupon.id, getCouponStatus(coupon)]),
+        ),
       );
     } catch (error) {
       console.error(error);
@@ -216,7 +216,7 @@ export default function CouponsPage() {
 
       if (response.ok) {
         setCoupons((previous) =>
-          previous.filter((item) => item.id !== coupon.id)
+          previous.filter((item) => item.id !== coupon.id),
         );
         setStatuses((previous) => {
           const next = { ...previous };
@@ -249,7 +249,7 @@ export default function CouponsPage() {
 
   return (
     <main className="flex-1 bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -313,7 +313,7 @@ export default function CouponsPage() {
                   key={coupon.id}
                   className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-[#279236]/30 hover:shadow-xl hover:shadow-[#279236]/10 sm:flex-row"
                 >
-                  <div className="relative flex flex-col justify-between gap-6 overflow-hidden bg-gradient-to-br from-[#2a9c3b] via-[#279236] to-[#1b6b28] p-5 text-white sm:w-64 sm:shrink-0 sm:p-6 lg:w-72">
+                  <div className="relative flex flex-col justify-between gap-6 overflow-hidden bg-gradient-to-br from-[#2a9c3b] via-[#279236] to-[#1b6b28] p-5 text-white sm:w-64 sm:shrink-0 sm:p-6 lg:w-92">
                     <span
                       className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-white/10"
                       aria-hidden="true"
@@ -368,7 +368,7 @@ export default function CouponsPage() {
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
                         Cupom de desconto
                       </p>
-                      <p className="mt-1 truncate text-2xl font-black tracking-[0.1em] text-white drop-shadow-sm lg:text-3xl">
+                      <p className="mt-1 truncate text-xl font-black tracking-[0.1em] text-white drop-shadow-sm lg:text-2xl">
                         {coupon.code}
                       </p>
                     </div>
@@ -399,22 +399,31 @@ export default function CouponsPage() {
                   <div className="flex flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <span className="flex items-center gap-1 text-4xl font-black leading-none text-[#279236]">
-                          {coupon.discount_type === "percentage" ? (
-                            <>
-                              {coupon.discount_value}
-                              <Percent
-                                className="h-6 w-6"
-                                aria-hidden="true"
-                              />
-                            </>
-                          ) : (
-                            currencyFormatter.format(coupon.discount_value)
-                          )}
-                        </span>
-                        <span className="text-sm font-bold uppercase tracking-wide text-[#279236]/70">
-                          off
-                        </span>
+                        {coupon.discount_value > 0 ? (
+                          <>
+                            <span className="flex items-center gap-1 text-4xl font-black leading-none text-[#279236]">
+                              {coupon.discount_type === "percentage" ? (
+                                <>
+                                  {coupon.discount_value}
+                                  <Percent
+                                    className="h-6 w-6"
+                                    aria-hidden="true"
+                                  />
+                                </>
+                              ) : (
+                                currencyFormatter.format(coupon.discount_value)
+                              )}
+                            </span>
+                            <span className="text-sm font-bold uppercase tracking-wide text-[#279236]/70">
+                              off
+                            </span>
+                          </>
+                        ) : null}
+                        {coupon.free_shipping && (
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">
+                            Frete grátis
+                          </span>
+                        )}
                       </div>
 
                       {coupon.description && (
@@ -432,7 +441,7 @@ export default function CouponsPage() {
                           <span>
                             {coupon.min_purchase > 0
                               ? `Compra mínima de ${currencyFormatter.format(
-                                  coupon.min_purchase
+                                  coupon.min_purchase,
                                 )}`
                               : "Sem valor mínimo de compra"}
                           </span>
