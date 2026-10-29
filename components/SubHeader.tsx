@@ -9,7 +9,6 @@ import {
   useRef,
   useEffect,
   type ReactNode,
-  type ReactPortal,
 } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -71,22 +70,13 @@ function applySubHeaderTheme(node: ReactNode): ReactNode {
       });
     }
 
-    if (
-      typeof child === "object" &&
-      child !== null &&
-      "$$typeof" in child &&
-      child.$$typeof === Symbol.for("react.portal")
-    ) {
-      const portal = child as ReactPortal;
-      return createPortal(
-        applySubHeaderTheme(portal.children),
-        portal.containerInfo,
-        portal.key,
-      );
-    }
-
     return child;
   });
+}
+
+function createThemedPortal(children: ReactNode, theme: SubHeaderProps["theme"]) {
+  const content = theme === "dark" ? applySubHeaderTheme(children) : children;
+  return createPortal(content, document.body);
 }
 
 const HEALTH_SERVICES = [
@@ -529,7 +519,7 @@ export default function SubHeader({ theme = "light" }: SubHeaderProps) {
       {/* Dropdown de Serviços de Saúde */}
       {healthServicesOpen &&
         healthServicesPosition &&
-        createPortal(
+        createThemedPortal(
           <div
             className="fixed inset-0 z-[60]"
             role="presentation"
@@ -559,12 +549,12 @@ export default function SubHeader({ theme = "light" }: SubHeaderProps) {
               ))}
             </div>
           </div>,
-          document.body,
+          theme,
         )}
 
       {/* Modal de Departamentos com categorias ao passar o cursor */}
       {departmentModalOpen &&
-        createPortal(
+        createThemedPortal(
           <div
             className="fixed inset-0 z-[70] flex items-start justify-center px-4 pt-32 sm:pt-36"
             role="presentation"
@@ -633,7 +623,7 @@ export default function SubHeader({ theme = "light" }: SubHeaderProps) {
               </div>
             </div>
           </div>,
-          document.body,
+          theme,
         )}
     </nav>
   );

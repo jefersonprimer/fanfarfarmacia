@@ -1,12 +1,10 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
-export async function GET() {
-  try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("fanfar_session")?.value;
+export async function GET(request: NextRequest) {
+  const sessionToken = request.cookies.get("fanfar_session")?.value;
 
+  try {
     if (!sessionToken) {
       return NextResponse.json({ user: null });
     }
