@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import {
+  BadgePercent,
   CalendarClock,
   Check,
   Copy,
   Pencil,
   Percent,
   Plus,
-  Tag,
+  ShoppingBag,
   Trash2,
   TicketPercent,
+  Users,
 } from "lucide-react";
 import CouponFormModal from "@/components/CouponFormModal";
 import type { Coupon } from "@/types/coupon";
@@ -38,24 +40,25 @@ function formatDate(value: string) {
 function getCouponStatus(coupon: Coupon) {
   const now = Date.now();
 
-  if (!coupon.active) {
-    return { label: "Inativo", className: "bg-gray-100 text-gray-600" };
-  }
-
+  if (!coupon.active) return "Inativo";
   if (coupon.expires_at && new Date(coupon.expires_at).getTime() <= now) {
-    return { label: "Expirado", className: "bg-red-50 text-red-600" };
+    return "Expirado";
   }
-
-  if (new Date(coupon.starts_at).getTime() > now) {
-    return { label: "Em breve", className: "bg-amber-50 text-amber-700" };
-  }
-
+  if (new Date(coupon.starts_at).getTime() > now) return "Em breve";
   if (coupon.usage_limit !== null && coupon.used_count >= coupon.usage_limit) {
-    return { label: "Esgotado", className: "bg-red-50 text-red-600" };
+    return "Esgotado";
   }
 
-  return { label: "Ativo", className: "bg-emerald-50 text-emerald-700" };
+  return "Ativo";
 }
+
+const statusChipOnHeader: Record<string, string> = {
+  Ativo: "bg-white text-[#1f7a2b] ring-white/40",
+  "Em breve": "bg-amber-300/90 text-amber-950 ring-amber-100/40",
+  Inativo: "bg-white/15 text-white ring-white/25",
+  Expirado: "bg-white/15 text-white ring-white/25",
+  Esgotado: "bg-white/15 text-white ring-white/25",
+};
 
 async function fetchCouponsData() {
   const meResponse = await fetch("/api/auth/me");
@@ -73,6 +76,59 @@ async function fetchCouponsData() {
   };
 }
 
+function CouponsSkeleton() {
+  return (
+    <div
+      className="mt-6 flex flex-col gap-4"
+      aria-busy="true"
+      aria-label="Carregando cupons"
+    >
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm sm:flex-row"
+        >
+          <div className="relative flex flex-col justify-between gap-6 overflow-hidden bg-gradient-to-br from-[#279236]/15 to-[#279236]/5 p-5 sm:w-64 sm:shrink-0 sm:p-6 lg:w-72">
+            <div className="flex items-center justify-between gap-3">
+              <div className="h-10 w-10 animate-pulse rounded-xl bg-[#279236]/20" />
+              <div className="h-5 w-14 animate-pulse rounded-full bg-[#279236]/15" />
+            </div>
+            <div>
+              <div className="h-2.5 w-24 animate-pulse rounded bg-[#279236]/20" />
+              <div className="mt-2 h-7 w-36 animate-pulse rounded bg-[#279236]/25" />
+            </div>
+          </div>
+
+          <div className="relative border-t border-dashed border-gray-200 sm:hidden">
+            <span className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-gray-50" />
+            <span className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-gray-50" />
+          </div>
+
+          <div className="relative hidden w-px shrink-0 border-l border-dashed border-gray-200 sm:block">
+            <span className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-gray-50" />
+            <span className="absolute -bottom-2.5 -left-2.5 h-5 w-5 rounded-full bg-gray-50" />
+          </div>
+
+          <div className="flex flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+            <div className="min-w-0 flex-1">
+              <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
+              <div className="mt-3 h-3 w-2/3 animate-pulse rounded bg-gray-100" />
+
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-gray-100 pt-4">
+                <div className="h-3 w-40 animate-pulse rounded bg-gray-100" />
+                <div className="h-3 w-32 animate-pulse rounded bg-gray-100" />
+                <div className="h-3 w-36 animate-pulse rounded bg-gray-100" />
+              </div>
+            </div>
+
+            <div className="h-11 w-full animate-pulse rounded-xl bg-[#279236]/15 sm:w-44 sm:shrink-0" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
@@ -84,9 +140,7 @@ export default function CouponsPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [statuses, setStatuses] = useState<
-    Record<string, { label: string; className: string }>
-  >({});
+  const [statuses, setStatuses] = useState<Record<string, string>>({});
 
   const isAdmin = user?.role === "admin";
 
@@ -100,10 +154,7 @@ export default function CouponsPage() {
         setCoupons(data.coupons);
         setStatuses(
           Object.fromEntries(
-            data.coupons.map((coupon) => [
-              coupon.id,
-              getCouponStatus(coupon),
-            ])
+            data.coupons.map((coupon) => [coupon.id, getCouponStatus(coupon)])
           )
         );
       })
@@ -213,7 +264,7 @@ export default function CouponsPage() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex items-center gap-1.5 self-start rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 sm:self-auto"
+              className="inline-flex items-center gap-1.5 self-start rounded-lg bg-[#279236] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f7a2b] sm:self-auto"
             >
               <Plus className="h-4 w-4" />
               Novo cupom
@@ -234,15 +285,15 @@ export default function CouponsPage() {
         )}
 
         {loading ? (
-          <p className="py-16 text-center text-sm text-gray-400">
-            Carregando cupons...
-          </p>
+          <CouponsSkeleton />
         ) : coupons.length === 0 ? (
-          <div className="mt-6 flex flex-col items-center rounded-2xl border border-gray-200 bg-white px-4 py-16 text-center">
-            <TicketPercent
-              className="h-12 w-12 text-gray-300"
-              aria-hidden="true"
-            />
+          <div className="mt-6 flex flex-col items-center rounded-2xl border border-dashed border-[#279236]/30 bg-white px-4 py-16 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#279236]/10">
+              <TicketPercent
+                className="h-8 w-8 text-[#279236]"
+                aria-hidden="true"
+              />
+            </span>
             <h2 className="mt-4 text-lg font-bold text-gray-900">
               Nenhum cupom disponível
             </h2>
@@ -251,121 +302,197 @@ export default function CouponsPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 flex flex-col gap-4">
             {coupons.map((coupon) => {
-              const status = statuses[coupon.id] ?? {
-                label: coupon.active ? "Ativo" : "Inativo",
-                className: coupon.active
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-gray-100 text-gray-600",
-              };
-              const isExpired = status.label === "Expirado";
+              const status =
+                statuses[coupon.id] ?? (coupon.active ? "Ativo" : "Inativo");
+              const isExpired = status === "Expirado";
 
               return (
                 <article
                   key={coupon.id}
-                  className="relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-[#279236]/30 hover:shadow-xl hover:shadow-[#279236]/10 sm:flex-row"
                 >
-                  <div className="flex items-start justify-between gap-3 border-b border-dashed border-gray-200 bg-gradient-to-br from-blue-50 to-white p-4">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-                        <Tag className="h-5 w-5" aria-hidden="true" />
+                  <div className="relative flex flex-col justify-between gap-6 overflow-hidden bg-gradient-to-br from-[#2a9c3b] via-[#279236] to-[#1b6b28] p-5 text-white sm:w-64 sm:shrink-0 sm:p-6 lg:w-72">
+                    <span
+                      className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-white/10"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="pointer-events-none absolute -bottom-16 -left-6 h-36 w-36 rounded-full bg-white/5"
+                      aria-hidden="true"
+                    />
+
+                    <div className="relative flex items-start justify-between gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
+                        <TicketPercent
+                          className="h-5 w-5 text-white"
+                          aria-hidden="true"
+                        />
                       </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-extrabold tracking-wide text-gray-900">
-                          {coupon.code}
-                        </p>
+
+                      <div className="flex items-center gap-1.5">
                         <span
-                          className={`mt-0.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${status.className}`}
+                          className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 ${
+                            statusChipOnHeader[status] ??
+                            "bg-white/15 text-white ring-white/25"
+                          }`}
                         >
-                          {status.label}
+                          {status}
                         </span>
+
+                        {isAdmin && (
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(coupon)}
+                              aria-label={`Editar ${coupon.code}`}
+                              className="rounded-lg p-1.5 text-white/80 transition hover:bg-white/15 hover:text-white"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(coupon)}
+                              aria-label={`Excluir ${coupon.code}`}
+                              className="rounded-lg p-1.5 text-white/80 transition hover:bg-red-500/30 hover:text-white"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {isAdmin && (
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(coupon)}
-                          aria-label={`Editar ${coupon.code}`}
-                          className="rounded p-1.5 text-gray-400 transition hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(coupon)}
-                          aria-label={`Excluir ${coupon.code}`}
-                          className="rounded p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
+                    <div className="relative">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+                        Cupom de desconto
+                      </p>
+                      <p className="mt-1 truncate text-2xl font-black tracking-[0.1em] text-white drop-shadow-sm lg:text-3xl">
+                        {coupon.code}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-1 flex-col p-4">
-                    <p className="flex items-center gap-1.5 text-xl font-extrabold text-blue-600">
-                      <Percent className="h-4 w-4" aria-hidden="true" />
-                      {coupon.discount_type === "percentage"
-                        ? `${coupon.discount_value}% OFF`
-                        : `${currencyFormatter.format(
-                            coupon.discount_value
-                          )} OFF`}
-                    </p>
+                  <div className="relative hidden w-px shrink-0 border-l border-dashed border-gray-200 sm:block">
+                    <span
+                      className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-gray-50"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="absolute -bottom-2.5 -left-2.5 h-5 w-5 rounded-full bg-gray-50"
+                      aria-hidden="true"
+                    />
+                  </div>
 
-                    {coupon.description && (
-                      <p className="mt-1.5 text-sm text-gray-600">
-                        {coupon.description}
-                      </p>
-                    )}
+                  <div className="relative border-t border-dashed border-gray-200 sm:hidden">
+                    <span
+                      className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-gray-50"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-gray-50"
+                      aria-hidden="true"
+                    />
+                  </div>
 
-                    <ul className="mt-3 space-y-1 text-xs text-gray-500">
-                      <li>
-                        {coupon.min_purchase > 0
-                          ? `Compra mínima de ${currencyFormatter.format(
-                              coupon.min_purchase
-                            )}`
-                          : "Sem valor mínimo de compra"}
-                      </li>
-                      {coupon.max_discount !== null &&
-                        coupon.max_discount > 0 && (
-                          <li>
-                            Desconto máximo de{" "}
-                            {currencyFormatter.format(coupon.max_discount)}
-                          </li>
-                        )}
-                      {coupon.expires_at && (
-                        <li className="flex items-center gap-1">
-                          <CalendarClock
-                            className="h-3.5 w-3.5"
+                  <div className="flex flex-1 flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                        <span className="flex items-center gap-1 text-4xl font-black leading-none text-[#279236]">
+                          {coupon.discount_type === "percentage" ? (
+                            <>
+                              {coupon.discount_value}
+                              <Percent
+                                className="h-6 w-6"
+                                aria-hidden="true"
+                              />
+                            </>
+                          ) : (
+                            currencyFormatter.format(coupon.discount_value)
+                          )}
+                        </span>
+                        <span className="text-sm font-bold uppercase tracking-wide text-[#279236]/70">
+                          off
+                        </span>
+                      </div>
+
+                      {coupon.description && (
+                        <p className="mt-2 line-clamp-2 text-sm text-gray-600">
+                          {coupon.description}
+                        </p>
+                      )}
+
+                      <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-gray-100 pt-4 text-xs text-gray-500">
+                        <li className="flex items-start gap-2">
+                          <ShoppingBag
+                            className="mt-px h-3.5 w-3.5 shrink-0 text-[#279236]/70"
                             aria-hidden="true"
                           />
-                          {isExpired ? "Expirou em" : "Válido até"}{" "}
-                          {formatDate(coupon.expires_at)}
+                          <span>
+                            {coupon.min_purchase > 0
+                              ? `Compra mínima de ${currencyFormatter.format(
+                                  coupon.min_purchase
+                                )}`
+                              : "Sem valor mínimo de compra"}
+                          </span>
                         </li>
-                      )}
-                      {coupon.usage_limit !== null && (
-                        <li>
-                          {coupon.used_count} de {coupon.usage_limit} usos
-                        </li>
-                      )}
-                    </ul>
+                        {coupon.max_discount !== null &&
+                          coupon.max_discount > 0 && (
+                            <li className="flex items-start gap-2">
+                              <BadgePercent
+                                className="mt-px h-3.5 w-3.5 shrink-0 text-[#279236]/70"
+                                aria-hidden="true"
+                              />
+                              <span>
+                                Desconto máximo de{" "}
+                                {currencyFormatter.format(coupon.max_discount)}
+                              </span>
+                            </li>
+                          )}
+                        {coupon.expires_at && (
+                          <li className="flex items-start gap-2">
+                            <CalendarClock
+                              className="mt-px h-3.5 w-3.5 shrink-0 text-[#279236]/70"
+                              aria-hidden="true"
+                            />
+                            <span>
+                              {isExpired ? "Expirou em" : "Válido até"}{" "}
+                              {formatDate(coupon.expires_at)}
+                            </span>
+                          </li>
+                        )}
+                        {coupon.usage_limit !== null && (
+                          <li className="flex items-start gap-2">
+                            <Users
+                              className="mt-px h-3.5 w-3.5 shrink-0 text-[#279236]/70"
+                              aria-hidden="true"
+                            />
+                            <span>
+                              {coupon.used_count} de {coupon.usage_limit} usos
+                            </span>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => handleCopy(coupon.code)}
-                      className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                      className={`inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-wide transition-all sm:w-44 sm:shrink-0 ${
+                        copiedCode === coupon.code
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-[#279236] text-white shadow-sm shadow-[#279236]/20 hover:bg-[#1f7a2b] hover:shadow-md hover:shadow-[#279236]/30"
+                      }`}
                     >
                       {copiedCode === coupon.code ? (
                         <>
-                          <Check className="h-3.5 w-3.5" />
+                          <Check className="h-4 w-4" />
                           Código copiado!
                         </>
                       ) : (
                         <>
-                          <Copy className="h-3.5 w-3.5" />
+                          <Copy className="h-4 w-4" />
                           Copiar código
                         </>
                       )}

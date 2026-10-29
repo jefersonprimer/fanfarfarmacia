@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
+  },
   cacheComponents: true,
   partialPrefetching: true,
   images: {
