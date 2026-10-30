@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface CarouselImage {
   src: string;
+  mobileSrc?: string;
   alt: string;
   href?: string;
 }
@@ -91,14 +92,26 @@ export default function ImageCarousel({
         {images.map((image, index) => {
           const isActive = index === currentIndex;
           const imageElement = (
-            <Image
-              src={image.src}
-              alt={image.alt}
-              fill
-              preload={index === 0}
-              sizes="(max-width: 1280px) 100vw, 1280px"
-              className="object-cover"
-            />
+            <>
+              <Image
+                src={image.src}
+                alt={image.alt}
+                fill
+                preload={index === 0}
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                className={`object-cover ${image.mobileSrc ? "hidden sm:block" : ""}`}
+              />
+              {image.mobileSrc && (
+                <Image
+                  src={image.mobileSrc}
+                  alt={image.alt}
+                  fill
+                  preload={index === 0}
+                  sizes="100vw"
+                  className="object-cover sm:hidden"
+                />
+              )}
+            </>
           );
 
           return (
@@ -108,7 +121,7 @@ export default function ImageCarousel({
               aria-roledescription="slide"
               aria-label={`${index + 1} de ${total}`}
               aria-hidden={!isActive}
-              className="relative aspect-[1318/300] w-full shrink-0"
+              className={`relative w-full shrink-0 ${image.mobileSrc ? "aspect-[1586/992] sm:aspect-[1318/300]" : "aspect-[1318/300]"}`}
             >
               {image.href ? (
                 <Link

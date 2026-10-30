@@ -14,11 +14,13 @@ import SubHeader from "@/components/SubHeader";
 const HOME_BANNERS: CarouselImage[] = [
   {
     src: "/banners/Esquenta Black Ofertas Banner.png",
+    mobileSrc: "/banners/Esquenta Black Ofertas Banner-mobile.png",
     alt: "Esquenta Black Ofertas",
     href: "/ofertas",
   },
   {
     src: "/banners/esquenta-black-fanfar-ofertas-70-off.png",
+    mobileSrc: "/banners/esquenta-black-fanfar-ofertas-70-off-mobile.png",
     alt: "Esquenta Black Fanfar Ofertas até 70% OF",
     href: "/ofertas",
   },
