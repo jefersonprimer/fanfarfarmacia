@@ -29,6 +29,7 @@ export async function GET(
         COALESCE(installments, 3) as installments,
         stock,
         is_featured,
+        is_new,
         created_at,
         updated_at
       FROM public.products
@@ -80,6 +81,7 @@ export async function PUT(
       installments = 3,
       stock = 100,
       is_featured = false,
+      is_new = false,
     } = body;
 
     if (!name || price === undefined || price === null) {
@@ -109,8 +111,9 @@ export async function PUT(
         installments = $14,
         stock = $15,
         is_featured = $16,
+        is_new = $17,
         updated_at = NOW()
-      WHERE id::text = $17 OR slug = $17
+      WHERE id::text = $18 OR slug = $18
       RETURNING *`,
       [
         name,
@@ -129,6 +132,7 @@ export async function PUT(
         parseInt(String(installments), 10) || 3,
         parseInt(String(stock), 10) || 100,
         Boolean(is_featured),
+        Boolean(is_new),
         id,
       ]
     );

@@ -19,6 +19,7 @@ import {
   Tag,
   Menu,
   X,
+  ShoppingBasket,
 } from "lucide-react";
 import { useCallback, useEffect, useState, useRef } from "react";
 import type { Product } from "@/types/product";
@@ -46,6 +47,7 @@ function getProductBadge(product: Product) {
   return (
     product.promotional_badge ??
     promotion?.badge_label ??
+    (product.is_new ? "Acabou de chegar" : null) ??
     (promotion && minQuantity > 1
       ? `Leve ${minQuantity}+`
       : promoAppliesAtOne
@@ -886,9 +888,9 @@ export default function Header({
               onClick={() => setCartOpen(true)}
               aria-label="Abrir sacola de compras"
               aria-expanded={cartOpen}
-              className="relative p-2.5 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+              className="relative p-2.5 rounded-full text-[#279236] transition-colors cursor-pointer"
             >
-              <ShoppingBag className="h-6 w-6" />
+              <ShoppingBasket size={28} />
               {cartItemCount > 0 && (
                 <span
                   className={`absolute bottom-0 right-0 flex items-center justify-center min-w-5 h-5 px-1 text-xs font-bold rounded-full shadow-sm ${theme === "dark" ? "text-black bg-yellow-400" : "text-white bg-red-500"}`}

@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
-import type { Promotion, PromotionScope, PromotionTarget } from "@/types/promotion";
+import type {
+  Promotion,
+  PromotionScope,
+  PromotionTarget,
+  PromotionType,
+} from "@/types/promotion";
 import type { Product } from "@/types/product";
 
 interface PromotionFormModalProps {
@@ -33,7 +38,7 @@ function toInputDate(value?: string | null) {
   const pad = (part: number) => String(part).padStart(2, "0");
 
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate()
+    date.getDate(),
   )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -50,35 +55,37 @@ export default function PromotionFormModal({
 
   const [name, setName] = useState(promotion?.name ?? "");
   const [description, setDescription] = useState(promotion?.description ?? "");
+  const [promotionType, setPromotionType] = useState<PromotionType>(promotion?.promotion_type ?? "discount");
+  const [minPurchase, setMinPurchase] = useState(String(promotion?.min_purchase ?? 0));
   const [scope, setScope] = useState<PromotionScope>(
-    promotion?.scope_type ?? "store"
+    promotion?.scope_type ?? "store",
   );
   const [targets, setTargets] = useState<PromotionTarget[]>(
-    promotion?.targets ?? []
+    promotion?.targets ?? [],
   );
   const [discountType, setDiscountType] = useState(
-    promotion?.discount_type ?? "percentage"
+    promotion?.discount_type ?? "percentage",
   );
   const [discountValue, setDiscountValue] = useState(
-    promotion ? String(promotion.discount_value) : ""
+    promotion ? String(promotion.discount_value) : "",
   );
   const [minQuantity, setMinQuantity] = useState(
-    promotion ? String(promotion.min_quantity) : "1"
+    promotion ? String(promotion.min_quantity) : "1",
   );
   const [maxDiscount, setMaxDiscount] = useState(
-    promotion?.max_discount != null ? String(promotion.max_discount) : ""
+    promotion?.max_discount != null ? String(promotion.max_discount) : "",
   );
-  const [badgeLabel, setBadgeLabel] = useState(
-    promotion?.badge_label ?? ""
-  );
+  const [badgeLabel, setBadgeLabel] = useState(promotion?.badge_label ?? "");
   const [priority, setPriority] = useState(
-    promotion ? String(promotion.priority) : "0"
+    promotion ? String(promotion.priority) : "0",
   );
   const [combinableWithCoupon, setCombinableWithCoupon] = useState(
-    promotion?.combinable_with_coupon ?? true
+    promotion?.combinable_with_coupon ?? true,
   );
   const [startsAt, setStartsAt] = useState(toInputDate(promotion?.starts_at));
-  const [expiresAt, setExpiresAt] = useState(toInputDate(promotion?.expires_at));
+  const [expiresAt, setExpiresAt] = useState(
+    toInputDate(promotion?.expires_at),
+  );
   const [active, setActive] = useState(promotion?.active ?? true);
   const [targetSearch, setTargetSearch] = useState("");
 
@@ -116,7 +123,9 @@ export default function PromotionFormModal({
   }, [onClose]);
 
   const departments = useMemo(() => {
-    const names = new Set<string>(DEPARTMENTS.map((department) => department.name));
+    const names = new Set<string>(
+      DEPARTMENTS.map((department) => department.name),
+    );
 
     products.forEach((product) => {
       if (product.department) names.add(product.department);
@@ -183,7 +192,7 @@ export default function PromotionFormModal({
     if (!search) return targetOptions;
 
     return targetOptions.filter((option) =>
-      option.label.toLowerCase().includes(search)
+      option.label.toLowerCase().includes(search),
     );
   }, [targetOptions, targetSearch]);
 
@@ -202,13 +211,11 @@ export default function PromotionFormModal({
     const type = scope;
 
     setTargets((previous) =>
-      previous.some(
-        (target) => target.type === type && target.value === value
-      )
+      previous.some((target) => target.type === type && target.value === value)
         ? previous.filter(
-            (target) => !(target.type === type && target.value === value)
+            (target) => !(target.type === type && target.value === value),
           )
-        : [...previous, { type, value }]
+        : [...previous, { type, value }],
     );
   };
 
@@ -216,7 +223,7 @@ export default function PromotionFormModal({
     event.preventDefault();
     setFeedback(null);
 
-    if (scope !== "store" && targets.length === 0) {
+    if (promotionType === "discount" && scope !== "store" && targets.length === 0) {
       setFeedback("Selecione pelo menos um alvo para a promoção.");
       return;
     }
@@ -227,10 +234,12 @@ export default function PromotionFormModal({
       const payload = {
         name,
         description: description.trim() || null,
-        scope_type: scope,
-        targets,
+        promotion_type: promotionType,
+        min_purchase: parseFloat(String(minPurchase).replace(",", ".")) || 0,
+        scope_type: promotionType === "free_shipping" ? "store" : scope,
+        targets: promotionType === "free_shipping" ? [] : targets,
         discount_type: discountType,
-        discount_value: parseFloat(String(discountValue).replace(",", ".")),
+        discount_value: promotionType === "free_shipping" ? 0 : parseFloat(String(discountValue).replace(",", ".")),
         min_quantity: parseInt(minQuantity, 10) || 1,
         max_discount: maxDiscount
           ? parseFloat(String(maxDiscount).replace(",", "."))
@@ -249,7 +258,7 @@ export default function PromotionFormModal({
           method: promotion ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       const data = await response.json();
@@ -262,7 +271,7 @@ export default function PromotionFormModal({
       onClose();
     } catch (error) {
       setFeedback(
-        error instanceof Error ? error.message : "Erro ao salvar promoção."
+        error instanceof Error ? error.message : "Erro ao salvar promoção.",
       );
     } finally {
       setSubmitting(false);
@@ -271,7 +280,7 @@ export default function PromotionFormModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[80] flex items-stretch justify-center bg-black/50 p-0 sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={onClose}
     >
@@ -280,7 +289,7 @@ export default function PromotionFormModal({
         aria-modal="true"
         aria-label={isEditing ? "Editar promoção" : "Nova promoção"}
         onMouseDown={(event) => event.stopPropagation()}
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="flex h-dvh max-h-dvh w-full max-w-none flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl"
       >
         <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
           <div>
@@ -288,8 +297,7 @@ export default function PromotionFormModal({
               {isEditing ? "Editar promoção" : "Nova promoção"}
             </h2>
             <p className="mt-0.5 text-xs text-gray-500">
-              Aplique descontos automáticos por loja, departamento, categoria,
-              marca ou produto.
+              Crie descontos automáticos ou promoções de frete grátis.
             </p>
           </div>
           <button
@@ -298,7 +306,7 @@ export default function PromotionFormModal({
             aria-label="Fechar"
             className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           >
-            <X className="h-4 w-4" />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
@@ -342,6 +350,47 @@ export default function PromotionFormModal({
 
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase text-gray-700">
+                Tipo de promoção *
+              </label>
+              <select
+                value={promotionType}
+                onChange={(event) => {
+                  const nextType = event.target.value as PromotionType;
+                  setPromotionType(nextType);
+                  if (nextType === "free_shipping") {
+                    setScope("store");
+                    setTargets([]);
+                  }
+                }}
+                className={inputClass}
+              >
+                <option value="discount">Desconto em produtos</option>
+                <option value="free_shipping">Frete grátis por compra mínima</option>
+              </select>
+            </div>
+
+            {promotionType === "free_shipping" && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                <label className="mb-1 block text-xs font-semibold uppercase text-emerald-900">
+                  Compra mínima para frete grátis (R$)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  required
+                  value={minPurchase}
+                  onChange={(event) => setMinPurchase(event.target.value)}
+                  placeholder="150.00"
+                  className={inputClass}
+                />
+                <p className="mt-1 text-xs text-emerald-800">
+                  O frete será grátis em pedidos iguais ou acima deste valor durante a validade da promoção.
+                </p>
+              </div>
+            )}
+
+            {promotionType === "discount" && <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-gray-700">
                 Onde a promoção vale *
               </label>
               <select
@@ -357,9 +406,9 @@ export default function PromotionFormModal({
                   </option>
                 ))}
               </select>
-            </div>
+            </div>}
 
-            {scope === "store" ? (
+            {promotionType === "free_shipping" ? null : scope === "store" ? (
               <p className="rounded-lg border border-[#279236]/20 bg-[#279236]/5 px-3 py-2.5 text-xs font-medium text-[#1f7a2b]">
                 A promoção será aplicada automaticamente a todos os produtos da
                 loja.
@@ -405,7 +454,7 @@ export default function PromotionFormModal({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {promotionType === "discount" && <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase text-gray-700">
                   Tipo de desconto *
@@ -417,14 +466,16 @@ export default function PromotionFormModal({
                       event.target.value as
                         | "percentage"
                         | "fixed"
-                        | "fixed_price"
+                        | "fixed_price",
                     )
                   }
                   className={inputClass}
                 >
                   <option value="percentage">Percentual (%)</option>
                   <option value="fixed">Valor fixo por unidade (R$)</option>
-                  <option value="fixed_price">Preço fixo por unidade (R$)</option>
+                  <option value="fixed_price">
+                    Preço fixo por unidade (R$)
+                  </option>
                 </select>
               </div>
 
@@ -457,9 +508,9 @@ export default function PromotionFormModal({
                   className={inputClass}
                 />
               </div>
-            </div>
+            </div>}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {promotionType === "discount" && <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase text-gray-700">
                   Desconto máximo (R$)
@@ -504,7 +555,7 @@ export default function PromotionFormModal({
                   Maior prioridade vence quando não acumulável.
                 </p>
               </div>
-            </div>
+            </div>}
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
@@ -586,6 +637,6 @@ export default function PromotionFormModal({
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

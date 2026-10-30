@@ -28,6 +28,7 @@ import ProductFormModal from "@/components/ProductFormModal";
 import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useCart } from "@/hooks/useCart";
 import { getPromotedUnitPrice } from "@/lib/promotions";
+import { getUnitPriceLabel } from "@/lib/product-unit-pricing";
 import { categoryPath, departmentPath, slugify } from "@/lib/catalog";
 import type { Coupon } from "@/types/coupon";
 import type { Product } from "@/types/product";
@@ -436,6 +437,7 @@ function ProductDetail() {
   const promoAppliesAtOne =
     promotion !== null && minQuantity <= 1 && promotedUnitPrice < unitPrice;
   const displayPrice = promoAppliesAtOne ? promotedUnitPrice : unitPrice;
+  const unitPriceLabel = getUnitPriceLabel(product.specifications, displayPrice);
   const originalPrice = product.original_price ?? null;
   const comparePrice = promoAppliesAtOne
     ? unitPrice
@@ -458,8 +460,12 @@ function ProductDetail() {
       : [];
 
   const specifications = Object.entries(product.specifications ?? {}).filter(
-    ([, value]) =>
-      value !== null && value !== undefined && String(value).trim() !== "",
+    ([key, value]) =>
+      key !== "quantidade_conteudo" &&
+      key !== "unidade_conteudo" &&
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== "",
   );
 
   const increaseQuantity = () => setCartQuantity(product, quantity + 1);
@@ -712,6 +718,10 @@ function ProductDetail() {
                 {currencyFormatter.format(displayPrice)}
               </p>
 
+              {unitPriceLabel && (
+                <p className="mt-1 text-sm text-gray-500">{unitPriceLabel}</p>
+              )}
+
               {requiresQuantity && (
                 <p className="mt-1 text-sm font-semibold text-red-600">
                   Promoção válida a partir de {minQuantity} unidades.
@@ -737,7 +747,7 @@ function ProductDetail() {
                     disabled={!inStock}
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-[#279236] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 cursor-pointer"
                   >
-                    Adicionar ao carrinho
+                    Adicionar à cesta
                   </button>
                 ) : (
                   <div className="flex items-center justify-between rounded-full border border-[#279236]/25 bg-[#279236]/5 p-1.5">
@@ -890,7 +900,7 @@ function ProductDetail() {
 
         {shareModalOpen && (
           <div
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4"
+            className="fixed inset-0 z-[120] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
             role="presentation"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget)
@@ -901,7 +911,7 @@ function ProductDetail() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="share-modal-title"
-              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+              className="max-h-[85dvh] w-full overflow-y-auto rounded-t-2xl bg-white p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-h-none sm:max-w-md sm:rounded-2xl sm:pb-6"
             >
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>

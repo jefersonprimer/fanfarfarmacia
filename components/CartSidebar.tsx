@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Minus, Package, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useDeliveryFee } from "@/hooks/useDeliveryFee";
+import { useFreeShippingPromotion } from "@/hooks/useFreeShippingPromotion";
 import { calculateLineDiscount, getPromotedUnitPrice } from "@/lib/promotions";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -19,6 +20,7 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ open, onClose }: CartSidebarProps) {
   const deliveryFee = useDeliveryFee();
+  const freeShippingPromotions = useFreeShippingPromotion();
   const {
     items,
     itemCount,
@@ -29,6 +31,9 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
     setCartQuantity,
     removeFromCart,
   } = useCart();
+  const freeShipping = coupon?.free_shipping === true || freeShippingPromotions.some(
+    (promotion) => total >= promotion.min_purchase,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -250,7 +255,7 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
                 <div className="flex items-center justify-between text-gray-500">
                   <dt>Frete</dt>
                   <dd>
-                    {coupon?.free_shipping
+                    {freeShipping
                       ? "Grátis"
                       : currencyFormatter.format(deliveryFee)}
                   </dd>
@@ -259,7 +264,7 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
                   <dt>Total</dt>
                   <dd>
                     {currencyFormatter.format(
-                      finalTotal + (coupon?.free_shipping ? 0 : deliveryFee),
+                      finalTotal + (freeShipping ? 0 : deliveryFee),
                     )}
                   </dd>
                 </div>

@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn1.staticpanvel.com.br",
       },
+      {
+        protocol: "https",
+        hostname: "sjdigital.vtexassets.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
   },
   turbopack: {

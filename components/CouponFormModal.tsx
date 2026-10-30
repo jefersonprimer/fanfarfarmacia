@@ -20,7 +20,7 @@ function toInputDate(value?: string | null) {
   const pad = (part: number) => String(part).padStart(2, "0");
 
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate()
+    date.getDate(),
   )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -41,20 +41,22 @@ export default function CouponFormModal({
   const [code, setCode] = useState(coupon?.code ?? "");
   const [description, setDescription] = useState(coupon?.description ?? "");
   const [discountType, setDiscountType] = useState<CouponDiscountType>(
-    coupon?.discount_type ?? "percentage"
+    coupon?.discount_type ?? "percentage",
   );
   const [discountValue, setDiscountValue] = useState(
-    coupon && coupon.discount_value > 0 ? String(coupon.discount_value) : ""
+    coupon && coupon.discount_value > 0 ? String(coupon.discount_value) : "",
   );
   const [minPurchase, setMinPurchase] = useState(
-    coupon ? String(coupon.min_purchase) : "0"
+    coupon ? String(coupon.min_purchase) : "0",
   );
   const [maxDiscount, setMaxDiscount] = useState(
-    coupon?.max_discount != null ? String(coupon.max_discount) : ""
+    coupon?.max_discount != null ? String(coupon.max_discount) : "",
   );
-  const [freeShipping, setFreeShipping] = useState(coupon?.free_shipping ?? false);
+  const [freeShipping, setFreeShipping] = useState(
+    coupon?.free_shipping ?? false,
+  );
   const [usageLimit, setUsageLimit] = useState(
-    coupon?.usage_limit != null ? String(coupon.usage_limit) : ""
+    coupon?.usage_limit != null ? String(coupon.usage_limit) : "",
   );
   const [startsAt, setStartsAt] = useState(toInputDate(coupon?.starts_at));
   const [expiresAt, setExpiresAt] = useState(toInputDate(coupon?.expires_at));
@@ -102,7 +104,7 @@ export default function CouponFormModal({
           method: coupon ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       const data = await response.json();
@@ -115,7 +117,7 @@ export default function CouponFormModal({
       onClose();
     } catch (error) {
       setFeedback(
-        error instanceof Error ? error.message : "Erro ao salvar cupom."
+        error instanceof Error ? error.message : "Erro ao salvar cupom.",
       );
     } finally {
       setSubmitting(false);
@@ -124,7 +126,7 @@ export default function CouponFormModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[80] flex items-stretch justify-center bg-black/50 p-0 sm:items-center sm:p-4"
       role="presentation"
       onMouseDown={onClose}
     >
@@ -133,7 +135,7 @@ export default function CouponFormModal({
         aria-modal="true"
         aria-label={isEditing ? "Editar cupom" : "Novo cupom"}
         onMouseDown={(event) => event.stopPropagation()}
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="flex h-dvh max-h-dvh w-full max-w-none flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl"
       >
         <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
           <div>
@@ -152,7 +154,7 @@ export default function CouponFormModal({
             aria-label="Fechar"
             className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           >
-            <X className="h-4 w-4" />
+            <X size={24} />
           </button>
         </div>
 
@@ -222,7 +224,13 @@ export default function CouponFormModal({
                   required={!freeShipping}
                   value={discountValue}
                   onChange={(event) => setDiscountValue(event.target.value)}
-                  placeholder={freeShipping ? "0.00 se não houver desconto em produtos" : discountType === "percentage" ? "10" : "20.00"}
+                  placeholder={
+                    freeShipping
+                      ? "0.00 se não houver desconto em produtos"
+                      : discountType === "percentage"
+                        ? "10"
+                        : "20.00"
+                  }
                   className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
                 />
               </div>
@@ -348,6 +356,6 @@ export default function CouponFormModal({
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

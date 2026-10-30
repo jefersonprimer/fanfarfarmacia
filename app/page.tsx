@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import CategoryCarousel, {
   type StoreCategory,
 } from "@/components/CategoryCarousel";
+import BrandCarousel, { type StoreBrand } from "@/components/BrandCarousel";
 import HomeBenefits from "@/components/HomeBenefits";
 import ImageCarousel, { type CarouselImage } from "@/components/ImageCarousel";
 import ProductCarousel from "@/components/ProductCarousel";
@@ -54,25 +55,25 @@ const HOME_CATEGORIES: StoreCategory[] = [
     name: "Protetor Solar",
     image:
       "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_2/all/20260720153500_6a5e6838d200f902c3f45a73_10/mvfn9gd0li32il.webp",
-    href: "/departamento/dermocosmeticos",
+    href: "/departamento/cuidado-diario",
   },
   {
     name: "JK Beauty",
     image:
       "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_1/mobile/20260828155500_6a94bf7eb9e6fb6d31eceae4_1/mtk6yee0cbmgl9.webp",
-    href: "/departamento/beleza-e-perfumaria",
+    href: "/departamento/marcas-asiaticas",
   },
   {
     name: "Higiene",
     image:
       "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_3/all/20260720153500_6a35a4c6c6a9734f6559becd_2/mrtk2468y1j59l.webp",
-    href: "/departamento/higiene-e-cuidados-pessoais",
+    href: "/departamento/cuidado-diario",
   },
   {
     name: "Suplementos",
     image:
       "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_2/all/20260720153500_6a5e6838d200f902c3f45a73_8/msxmg74ca5z528.webp",
-    href: "/departamento/nutricao-e-suplementos",
+    href: "/departamento/bem-estar",
   },
   {
     name: "Maquiagem",
@@ -85,6 +86,93 @@ const HOME_CATEGORIES: StoreCategory[] = [
     image:
       "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_1/desktop/20260921152000_6ab1754ab9e6fb6d31eceb9a_0/mucxu52d6obdh0.webp",
     href: "/departamento/medicamentos",
+  },
+];
+
+const HOME_BRANDS: StoreBrand[] = [
+  {
+    name: "Nivea",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/brand/all/20251201080000_67fceff7d9a18f57f8389093_1/mjirbhybxo9bn7.webp",
+    href: "/marca/nivea",
+  },
+  {
+    name: "Pampers",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/brand/all/20251223131500_67fceff7d9a18f57f8389093_5/mjisiegtqwmls5.webp",
+    href: "/marca/pampers",
+  },
+  {
+    name: "Dove",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/brand/all/20251201080000_67fceff7d9a18f57f8389093_2/mjirbhyb13je7z.webp",
+    href: "/marca/dove",
+  },
+  {
+    name: "Principia",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/brand/all/20260529173600_6a19f68092169b007cec4b7b_0/mprdi82ehrzuhp.webp",
+    href: "/marca/principia",
+  },
+  {
+    name: "Rexona",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/brand/all/20251201080000_67fceff7d9a18f57f8389093_8/mjirbhybk9q4zq.webp",
+    href: "/marca/rexona",
+  },
+  {
+    name: "Huggies",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/brand/all/20251201080000_67fceff7d9a18f57f8389093_7/mjirbhyb464eo0.webp",
+    href: "/marca/huggies",
+  },
+  {
+    name: "Eucerin",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/category/promotional_1/all/20260430110000_69f35c970e4a40435f3153fc_10/molp7khnioyr2f.webp",
+    href: "/marca/eucerin",
+  },
+  {
+    name: "Condres",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_7/all/20260703150000_6a4805c615d04446474d3802_0/mr5ao733nrg1xz.webp",
+    href: "/marca/condres",
+  },
+  {
+    name: "Danone",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_9/all/20261022135000_6ada3780d126397280483eef_0/mvjqz4fb7s3kef.webp",
+    href: "/marca/danone",
+  },
+  {
+    name: "Lux",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_9/all/20260826153500_6a4805c615d04446474d3802_0/mtafhwlzf81ag1.webp",
+    href: "/marca/lux",
+  },
+  {
+    name: "Elmex",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_9/all/20260826153500_6a4805c615d04446474d3802_0/mtafiqvp4pjsat.webp",
+    href: "/marca/elmex",
+  },
+  {
+    name: "Johnson's",
+    image:
+      "https://cdn1.staticpanvel.com.br/cdn_service/banners/home/promotional_9/all/20260930105000_6abd0c4f193ad5761019f7dd_0/muo4zggqc4w0qd.webp",
+    href: "/marca/johnson-s",
+  },
+  {
+    name: "Libbs",
+    image:
+      "https://sjdigital.vtexassets.com/assets/vtex.file-manager-graphql/images/88f148ff-2443-4add-aad9-e9e09593c9b8___dac57c0c26da8531ea733026595d6181.webp",
+    href: "/marca/libbs",
+  },
+  {
+    name: "EMS",
+    image:
+      "https://sjdigital.vtexassets.com/assets/vtex.file-manager-graphql/images/468535dd-4064-44f8-9a35-2ec81b8d6a04___2aa05ff9a1fd9ce351147eaa2925f838.webp",
+    href: "/marca/ems",
   },
 ];
 
@@ -173,8 +261,15 @@ export default function Home() {
     CARE_DEPARTMENTS.includes(product.department ?? ""),
   );
   const cares = careProducts.length > 0 ? careProducts : products;
+  const newArrivals = products.filter((product) => product.is_new);
 
   const productSections: HomeProductSection[] = [
+    {
+      key: "novidades",
+      title: "Acabou de chegar",
+      subtitle: "Conheça as novidades que chegaram na Fanfar.",
+      products: newArrivals,
+    },
     {
       key: "mais-comprados",
       title: "Mais comprados",
@@ -219,10 +314,7 @@ export default function Home() {
 
       <HomeBenefits />
 
-      <CategoryCarousel
-        categories={HOME_CATEGORIES}
-        title="Navegue por categoria"
-      />
+      <CategoryCarousel categories={HOME_CATEGORIES} />
 
       {loading ? (
         <section className="py-8">
@@ -257,6 +349,8 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      <BrandCarousel brands={HOME_BRANDS} />
     </main>
   );
 }

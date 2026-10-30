@@ -54,6 +54,7 @@ function getPromotionStatus(promotion: Promotion) {
 }
 
 function discountLabel(promotion: Promotion) {
+  if (promotion.promotion_type === "free_shipping") return "FRETE GRÁTIS";
   switch (promotion.discount_type) {
     case "percentage":
       return `${promotion.discount_value}% OFF`;
@@ -204,8 +205,7 @@ export default function PromotionsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Promoções</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Descontos automáticos por loja, departamento, categoria, marca ou
-              produto.
+              Descontos automáticos em produtos ou campanhas de frete grátis.
             </p>
           </div>
 
@@ -273,7 +273,7 @@ export default function PromotionsPage() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#279236] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#279236]/80"
             >
               <Plus className="h-4 w-4" />
               Nova promoção
@@ -302,7 +302,9 @@ export default function PromotionsPage() {
                         </span>
                       </div>
                       <p className="mt-0.5 text-xs font-semibold uppercase tracking-wide text-blue-600">
-                        {SCOPE_LABELS[promotion.scope_type]}
+                        {promotion.promotion_type === "free_shipping"
+                          ? "Frete grátis • loja inteira"
+                          : SCOPE_LABELS[promotion.scope_type]}
                       </p>
                     </div>
 
@@ -326,7 +328,7 @@ export default function PromotionsPage() {
                     </div>
                   </div>
 
-                  <p className="mt-3 text-2xl font-extrabold text-red-600">
+                  <p className={`mt-3 text-2xl font-extrabold ${promotion.promotion_type === "free_shipping" ? "text-emerald-600" : "text-red-600"}`}>
                     {discountLabel(promotion)}
                   </p>
 
@@ -344,6 +346,9 @@ export default function PromotionsPage() {
                   </p>
 
                   <ul className="mt-3 space-y-1 text-xs text-gray-500">
+                    {promotion.promotion_type === "free_shipping" && (
+                      <li>Compra mínima de {currencyFormatter.format(promotion.min_purchase)}</li>
+                    )}
                     {promotion.min_quantity > 1 && (
                       <li>
                         A partir de {promotion.min_quantity} unidades por item

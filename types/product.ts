@@ -12,6 +12,8 @@ export interface ProductSpecifications {
   indicacoes_uso?: string;
   linha?: string;
   modo_uso?: string;
+  quantidade_conteudo?: number;
+  unidade_conteudo?: "unidade" | "g" | "kg" | "ml" | "l";
 }
 
 export interface ProductVariation {
@@ -40,6 +42,7 @@ export interface Product {
   installments?: number; // Quantas vezes parcelado (ex: 3x, 6x, 10x)
   stock: number;
   is_featured: boolean;
+  is_new?: boolean;
   promotion?: AppliedPromotion | null;
   promotional_price?: number | null;
   promotional_badge?: string | null;
@@ -65,4 +68,5 @@ export interface CreateProductInput {
   installments?: number;
   stock?: number;
   is_featured?: boolean;
+  is_new?: boolean;
 }

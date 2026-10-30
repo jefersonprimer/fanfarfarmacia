@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface StoreCategory {
@@ -19,10 +19,26 @@ interface CategoryCarouselProps {
 
 export default function CategoryCarousel({
   categories,
-  title = "Categorias",
+  title,
   subtitle,
 }: CategoryCarouselProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canScroll, setCanScroll] = useState(false);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const updateCanScroll = () => {
+      setCanScroll(scroller.scrollWidth > scroller.clientWidth);
+    };
+
+    updateCanScroll();
+    const resizeObserver = new ResizeObserver(updateCanScroll);
+    resizeObserver.observe(scroller);
+
+    return () => resizeObserver.disconnect();
+  }, [categories]);
 
   const scroll = (direction: -1 | 1) => {
     const scroller = scrollerRef.current;
@@ -66,29 +82,33 @@ export default function CategoryCarousel({
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <span className="text-center text-sm font-semibold leading-snug text-gray-800 transition-colors group-hover:text-blue-600">
+                <span className="text-center text-sm font-semibold leading-snug text-gray-800 transition-colors group-hover:text-[#279236]">
                   {category.name}
                 </span>
               </Link>
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => scroll(-1)}
-            aria-label="Categorias anteriores"
-            className="absolute left-0 top-[calc(50%-1.25rem)] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-600 shadow-md transition hover:border-blue-300 hover:text-blue-600 sm:flex"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll(1)}
-            aria-label="Próximas categorias"
-            className="absolute right-0 top-[calc(50%-1.25rem)] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-600 shadow-md transition hover:border-blue-300 hover:text-blue-600 sm:flex"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          {canScroll && (
+            <>
+              <button
+                type="button"
+                onClick={() => scroll(-1)}
+                aria-label="Categorias anteriores"
+                className="absolute -left-3 top-[calc(50%-1.25rem)] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-600 shadow-md transition hover:border-blue-300 hover:text-blue-600 sm:flex lg:-left-5"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scroll(1)}
+                aria-label="Próximas categorias"
+                className="absolute -right-3 top-[calc(50%-1.25rem)] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-600 shadow-md transition hover:border-blue-300 hover:text-blue-600 sm:flex lg:-right-5"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </section>

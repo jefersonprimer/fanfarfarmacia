@@ -5,10 +5,12 @@ import {
 } from "@/lib/promotions";
 import type { Product } from "@/types/product";
 import type { Promotion, PromotionTarget } from "@/types/promotion";
+import { ensurePromotionsSchema } from "@/lib/promotions-schema";
 
 export async function loadPromotions(
   options: { onlyActive?: boolean } = {}
 ): Promise<Promotion[]> {
+  await ensurePromotionsSchema();
   const onlyActive = options.onlyActive ?? true;
 
   let sql = "SELECT * FROM public.promotions";
@@ -67,8 +69,9 @@ export async function withProductPromotions<T extends Product>(
     console.error("Erro ao carregar promoções:", error);
   }
 
+  const discountPromotions = promotions.filter((promotion) => promotion.promotion_type === "discount");
   return products.map((product) => ({
     ...product,
-    ...buildProductPromotionFields(product, promotions),
+    ...buildProductPromotionFields(product, discountPromotions),
   }));
 }

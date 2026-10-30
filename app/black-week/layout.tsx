@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import SubHeader from "@/components/SubHeader";
 import Footer from "@/components/Footer";
 import CartToast from "@/components/CartToast";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 export const metadata: Metadata = {
   title: "Black Week Fanfar Farmácia | Ofertas e Descontos",
@@ -17,6 +18,7 @@ export default function BlackWeekLayout({
 }) {
   return (
     <>
+      <AnnouncementBar />
       <Header
         theme="dark"
         logoSrc="/Black Week Fanfar Pharmacy Banner.png"

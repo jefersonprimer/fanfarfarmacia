@@ -47,12 +47,14 @@ async function init() {
       subcategory VARCHAR(100),
       stock INTEGER DEFAULT 100,
       is_featured BOOLEAN DEFAULT false,
+      is_new BOOLEAN DEFAULT false,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `);
 
   await client.query(`ALTER TABLE public.products ADD COLUMN IF NOT EXISTS subcategory VARCHAR(100);`);
+  await client.query(`ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT false;`);
 
   // Acelera a busca parcial (ILIKE '%termo%') usada no autocomplete.
   await client.query(`
@@ -111,11 +113,16 @@ async function init() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name VARCHAR(120) NOT NULL,
       description TEXT,
+      promotion_type VARCHAR(20) NOT NULL DEFAULT 'discount'
+        CHECK (promotion_type IN ('discount', 'free_shipping')),
+      min_purchase NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (min_purchase >= 0),
       scope_type VARCHAR(20) NOT NULL DEFAULT 'store'
         CHECK (scope_type IN ('store', 'department', 'category', 'brand', 'product')),
       discount_type VARCHAR(20) NOT NULL DEFAULT 'percentage'
         CHECK (discount_type IN ('percentage', 'fixed', 'fixed_price')),
-      discount_value NUMERIC(10, 2) NOT NULL CHECK (discount_value > 0),
+      discount_value NUMERIC(10, 2) NOT NULL
+        CHECK ((promotion_type = 'discount' AND discount_value > 0) OR
+               (promotion_type = 'free_shipping' AND discount_value = 0)),
       min_quantity INTEGER NOT NULL DEFAULT 1 CHECK (min_quantity >= 1),
       max_discount NUMERIC(10, 2),
       badge_label VARCHAR(40),

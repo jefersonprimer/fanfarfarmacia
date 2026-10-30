@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Minus, Package, Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { getPromotedUnitPrice } from "@/lib/promotions";
+import { getUnitPriceLabel } from "@/lib/product-unit-pricing";
 import type { Product } from "@/types/product";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -34,6 +35,7 @@ export default function ProductCard({
   const promoAppliesAtOne =
     promotion !== null && minQuantity <= 1 && promotedUnitPrice < unitPrice;
   const displayPrice = promoAppliesAtOne ? promotedUnitPrice : unitPrice;
+  const unitPriceLabel = getUnitPriceLabel(product.specifications, displayPrice);
   const originalPrice = product.original_price ?? null;
   const comparePrice = promoAppliesAtOne
     ? unitPrice
@@ -49,11 +51,13 @@ export default function ProductCard({
   const badgeText =
     product.promotional_badge ??
     promotion?.badge_label ??
+    (product.is_new ? "Novidade" : null) ??
     (requiresQuantity
       ? `Leve ${minQuantity}+`
       : promoAppliesAtOne
         ? fallbackBadge
         : null);
+  const isNewBadge = badgeText?.toLocaleLowerCase("pt-BR") === "novidade";
 
   const increaseQuantity = () => {
     if (quantity === 0) {
@@ -95,7 +99,7 @@ export default function ProductCard({
               className={
                 theme === "dark"
                   ? "absolute right-2 top-2 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-black shadow-sm"
-                  : "absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
+                  : `absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ${isNewBadge ? "bg-[#279236]" : "bg-red-500"}`
               }
             >
               {badgeText}
@@ -190,6 +194,12 @@ export default function ProductCard({
           >
             {currencyFormatter.format(displayPrice)}
           </p>
+
+          {unitPriceLabel && (
+            <p className={`mt-1 text-xs ${theme === "dark" ? "text-white/50" : "text-gray-500"}`}>
+              {unitPriceLabel}
+            </p>
+          )}
 
           {requiresQuantity ? (
             <p

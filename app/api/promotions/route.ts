@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { normalizePromotion, parsePromotionInput } from "@/lib/promotions";
 import { loadPromotions } from "@/lib/promotions-server";
 import type { PromotionInput } from "@/types/promotion";
+import { ensurePromotionsSchema } from "@/lib/promotions-schema";
 
 export async function GET(request: Request) {
   try {
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
       );
     }
 
+    await ensurePromotionsSchema();
+
     const body: PromotionInput = await request.json();
     const parsed = parsePromotionInput(body);
 
@@ -52,6 +55,8 @@ export async function POST(request: Request) {
         `INSERT INTO public.promotions (
           name,
           description,
+          promotion_type,
+          min_purchase,
           scope_type,
           discount_type,
           discount_value,
@@ -64,11 +69,13 @@ export async function POST(request: Request) {
           starts_at,
           expires_at,
           active
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *`,
         [
           data.name,
           data.description,
+          data.promotion_type,
+          data.min_purchase,
           data.scope_type,
           data.discount_type,
           data.discount_value,

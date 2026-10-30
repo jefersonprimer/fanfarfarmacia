@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 
 import Footer from "@/components/Footer";
 import CartToast from "@/components/CartToast";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 const BLACK_WEEK_ROUTES = ["/black-week"];
 
@@ -22,6 +23,7 @@ function ConditionalShellContent({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <AnnouncementBar />
       <Header />
 
       <CartToast />

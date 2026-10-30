@@ -8,6 +8,7 @@ export type PromotionScope =
 export type PromotionTargetType = Exclude<PromotionScope, "store">;
 
 export type PromotionDiscountType = "percentage" | "fixed" | "fixed_price";
+export type PromotionType = "discount" | "free_shipping";
 
 export interface PromotionTarget {
   type: PromotionTargetType;
@@ -18,6 +19,8 @@ export interface Promotion {
   id: string;
   name: string;
   description: string | null;
+  promotion_type: PromotionType;
+  min_purchase: number;
   scope_type: PromotionScope;
   targets: PromotionTarget[];
   discount_type: PromotionDiscountType;
@@ -49,6 +52,8 @@ export interface AppliedPromotion {
 export interface PromotionInput {
   name: string;
   description?: string | null;
+  promotion_type?: PromotionType;
+  min_purchase?: number;
   scope_type: PromotionScope;
   targets?: PromotionTarget[];
   discount_type: PromotionDiscountType;

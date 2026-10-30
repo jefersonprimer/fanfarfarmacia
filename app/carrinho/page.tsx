@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useDeliveryFee } from "@/hooks/useDeliveryFee";
+import { useFreeShippingPromotion } from "@/hooks/useFreeShippingPromotion";
 import { useStoreSchedule } from "@/hooks/useStoreSchedule";
 import { describeStoreHours, getScheduleError } from "@/lib/store-hours";
 import { calculateLineDiscount, getPromotedUnitPrice } from "@/lib/promotions";
@@ -29,6 +30,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 export default function CartPage() {
   const router = useRouter();
   const deliveryFee = useDeliveryFee();
+  const freeShippingPromotions = useFreeShippingPromotion();
   const storeSchedule = useStoreSchedule();
   const {
     items,
@@ -47,6 +49,13 @@ export default function CartPage() {
     applyCoupon,
     removeCoupon,
   } = useCart();
+  const qualifyingFreeShippingPromotion = freeShippingPromotions
+    .filter((promotion) => total >= promotion.min_purchase)
+    .sort((a, b) => a.min_purchase - b.min_purchase)[0];
+  const nextFreeShippingPromotion = freeShippingPromotions
+    .filter((promotion) => total < promotion.min_purchase)
+    .sort((a, b) => a.min_purchase - b.min_purchase)[0];
+  const freeShipping = coupon?.free_shipping === true || Boolean(qualifyingFreeShippingPromotion);
 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -533,16 +542,21 @@ export default function CartPage() {
                 <div className="flex items-center justify-between text-gray-500">
                   <dt>Frete</dt>
                   <dd>
-                    {coupon?.free_shipping
+                    {freeShipping
                       ? "Grátis"
                       : currencyFormatter.format(deliveryFee)}
                   </dd>
                 </div>
+                {!freeShipping && nextFreeShippingPromotion && (
+                  <p className="text-right text-xs text-gray-500">
+                    Faltam {currencyFormatter.format(nextFreeShippingPromotion.min_purchase - total)} para ganhar frete grátis.
+                  </p>
+                )}
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
                   <dt>Total</dt>
                   <dd>
                     {currencyFormatter.format(
-                      finalTotal + (coupon?.free_shipping ? 0 : deliveryFee),
+                      finalTotal + (freeShipping ? 0 : deliveryFee),
                     )}
                   </dd>
                 </div>
@@ -570,7 +584,7 @@ export default function CartPage() {
       </div>
       {checkoutOpen && items.length > 0 && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-gray-950/55 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-[100] flex items-stretch justify-center bg-gray-950/55 p-0 backdrop-blur-[2px] sm:items-center sm:overflow-y-auto sm:p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setCheckoutOpen(false);
           }}
@@ -579,7 +593,7 @@ export default function CartPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="checkout-title"
-            className="my-auto w-full max-w-xl rounded-2xl bg-white shadow-2xl"
+            className="flex h-dvh max-h-dvh w-full max-w-none flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:my-auto sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-2xl"
           >
             <header className="flex items-start justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
               <div>
@@ -604,7 +618,7 @@ export default function CartPage() {
             </header>
             <form
               onSubmit={handleCheckout}
-              className="max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto px-5 py-5 sm:px-6"
+              className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:max-h-[calc(90vh-8rem)] sm:flex-none sm:px-6"
             >
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="text-xs font-semibold text-gray-700">

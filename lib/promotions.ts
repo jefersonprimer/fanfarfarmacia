@@ -7,6 +7,7 @@ import type {
   PromotionScope,
   PromotionTarget,
   PromotionTargetType,
+  PromotionType,
 } from "@/types/promotion";
 
 const SCOPES: PromotionScope[] = [
@@ -29,6 +30,7 @@ const TARGET_TYPES: PromotionTargetType[] = [
   "brand",
   "product",
 ];
+const PROMOTION_TYPES: PromotionType[] = ["discount", "free_shipping"];
 
 function toIsoString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -62,6 +64,10 @@ export function normalizePromotion(
     id: String(row.id),
     name: String(row.name ?? ""),
     description: row.description == null ? null : String(row.description),
+    promotion_type: PROMOTION_TYPES.includes(row.promotion_type as PromotionType)
+      ? (row.promotion_type as PromotionType)
+      : "discount",
+    min_purchase: Math.max(0, Number(row.min_purchase ?? 0)),
     scope_type: SCOPES.includes(row.scope_type as PromotionScope)
       ? (row.scope_type as PromotionScope)
       : "store",
@@ -283,6 +289,8 @@ export function buildProductPromotionFields(
 export interface ParsedPromotionInput {
   name: string;
   description: string | null;
+  promotion_type: PromotionType;
+  min_purchase: number;
   scope_type: PromotionScope;
   targets: PromotionTarget[];
   discount_type: PromotionDiscountType;
@@ -323,9 +331,22 @@ export function parsePromotionInput(
     return { error: "Tipo de desconto inválido." };
   }
 
-  const discountValue = Number(input.discount_value);
+  const promotionType = input.promotion_type ?? "discount";
+  if (!PROMOTION_TYPES.includes(promotionType)) {
+    return { error: "Tipo de promoção inválido." };
+  }
+  const minPurchase = Number(input.min_purchase ?? 0);
+  if (!Number.isFinite(minPurchase) || minPurchase < 0) {
+    return { error: "Informe uma compra mínima válida." };
+  }
 
-  if (!Number.isFinite(discountValue) || discountValue <= 0) {
+  if (promotionType === "free_shipping" && scopeType !== "store") {
+    return { error: "A promoção de frete grátis deve valer para a loja inteira." };
+  }
+
+  const discountValue = promotionType === "free_shipping" ? 0 : Number(input.discount_value);
+
+  if (!Number.isFinite(discountValue) || (promotionType === "discount" && discountValue <= 0)) {
     return { error: "Informe um valor de desconto válido." };
   }
 
@@ -415,6 +436,8 @@ export function parsePromotionInput(
     value: {
       name,
       description: input.description?.trim() || null,
+      promotion_type: promotionType,
+      min_purchase: minPurchase,
       scope_type: scopeType,
       targets,
       discount_type: discountType,

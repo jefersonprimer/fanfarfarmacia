@@ -43,6 +43,7 @@ export default function ProductFormModal({
     product ? String(product.stock) : "100"
   );
   const [isFeatured, setIsFeatured] = useState(product?.is_featured ?? false);
+  const [isNew, setIsNew] = useState(product?.is_new ?? false);
 
   const [price, setPrice] = useState(
     product ? String(product.price).replace(".", ",") : ""
@@ -63,6 +64,7 @@ export default function ProductFormModal({
 
   const [images, setImages] = useState<string[]>(product?.images ?? []);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [options, setOptions] = useState<ProductVariation[]>(
     product?.options ?? []
@@ -93,6 +95,14 @@ export default function ProductFormModal({
   );
   const [linha, setLinha] = useState(specifications.linha ?? "");
   const [modoUso, setModoUso] = useState(specifications.modo_uso ?? "");
+  const [quantidadeConteudo, setQuantidadeConteudo] = useState(
+    specifications.quantidade_conteudo != null
+      ? String(specifications.quantidade_conteudo).replace(".", ",")
+      : "",
+  );
+  const [unidadeConteudo, setUnidadeConteudo] = useState(
+    specifications.unidade_conteudo ?? "unidade",
+  );
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -120,6 +130,52 @@ export default function ProductFormModal({
 
   const handleRemoveImage = (index: number) => {
     setImages(images.filter((_, imageIndex) => imageIndex !== index));
+  };
+
+  const handleUploadImage = async (file?: File) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(file.type)) {
+      setFeedback("Envie uma imagem JPG, PNG, WebP, GIF ou AVIF.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setFeedback("A imagem deve ter no máximo 10 MB.");
+      return;
+    }
+
+    setFeedback(null);
+    setUploadingImage(true);
+    try {
+      const signatureResponse = await fetch("/api/uploads/cloudinary-signature", {
+        method: "POST",
+      });
+      const signatureData = await signatureResponse.json();
+      if (!signatureResponse.ok) {
+        throw new Error(signatureData.error || "Não foi possível iniciar o envio.");
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("api_key", signatureData.apiKey);
+      formData.append("timestamp", String(signatureData.timestamp));
+      formData.append("folder", signatureData.folder);
+      formData.append("signature", signatureData.signature);
+
+      const uploadResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${encodeURIComponent(signatureData.cloudName)}/image/upload`,
+        { method: "POST", body: formData },
+      );
+      const uploadData = await uploadResponse.json();
+      if (!uploadResponse.ok || !uploadData.secure_url) {
+        throw new Error(uploadData.error?.message || "O Cloudinary não aceitou a imagem.");
+      }
+
+      setImages((current) => [...current, uploadData.secure_url]);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Erro ao enviar imagem.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleAddVariation = () => {
@@ -168,6 +224,7 @@ export default function ProductFormModal({
         installments: parseInt(installments, 10) || 3,
         stock: parseInt(stock, 10) || 100,
         is_featured: isFeatured,
+        is_new: isNew,
         specifications: {
           ean,
           sku,
@@ -180,6 +237,10 @@ export default function ProductFormModal({
           indicacoes_uso: indicacoesUso,
           linha,
           modo_uso: modoUso,
+          quantidade_conteudo: quantidadeConteudo
+            ? parsePrice(quantidadeConteudo)
+            : undefined,
+          unidade_conteudo: unidadeConteudo,
         },
       };
 
@@ -348,8 +409,24 @@ export default function ProductFormModal({
 
             <div className="space-y-3 border-t border-gray-100 pt-4">
               <label className="block text-xs font-semibold uppercase text-gray-700">
-                Imagens do Produto (URLs)
+                Imagens do Produto
               </label>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className={`cursor-pointer rounded-lg bg-[#279236] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#207c2e] ${uploadingImage ? "pointer-events-none opacity-60" : ""}`}>
+                  {uploadingImage ? "Enviando imagem..." : "Enviar do computador"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                    className="sr-only"
+                    disabled={uploadingImage}
+                    onChange={(event) => {
+                      void handleUploadImage(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                <span className="text-xs text-gray-500">JPG, PNG, WebP, GIF ou AVIF · até 10 MB</span>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="url"
@@ -527,6 +604,41 @@ export default function ProductFormModal({
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs text-gray-600">
+                    Quantidade na embalagem
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={quantidadeConteudo}
+                    onChange={(event) => setQuantidadeConteudo(event.target.value)}
+                    placeholder="Ex: 140, 500 ou 1"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600">
+                    Unidade da embalagem
+                  </label>
+                  <select
+                    value={unidadeConteudo}
+                    onChange={(event) =>
+                      setUnidadeConteudo(
+                        event.target.value as typeof unidadeConteudo,
+                      )
+                    }
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                  >
+                    <option value="unidade">Unidades</option>
+                    <option value="g">Gramas (g)</option>
+                    <option value="kg">Quilos (kg)</option>
+                    <option value="ml">Mililitros (ml)</option>
+                    <option value="l">Litros (L)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600">
                     EAN
                   </label>
                   <input
@@ -685,15 +797,26 @@ export default function ProductFormModal({
                 />
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={isFeatured}
-                  onChange={(event) => setIsFeatured(event.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-[#279236]"
-                />
-                <span>Destacar na Vitrine Principal</span>
-              </label>
+              <div className="flex flex-col gap-3">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(event) => setIsFeatured(event.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#279236]"
+                  />
+                  <span>Destacar na Vitrine Principal</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={isNew}
+                    onChange={(event) => setIsNew(event.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#279236]"
+                  />
+                  <span>Novidade · exibir em “Acabou de chegar”</span>
+                </label>
+              </div>
             </div>
           </div>
 

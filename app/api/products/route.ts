@@ -73,6 +73,7 @@ export async function GET(request: Request) {
         COALESCE(installments, 3) as installments,
         stock,
         is_featured,
+        is_new,
         created_at,
         updated_at
       FROM public.products
@@ -142,6 +143,7 @@ export async function POST(request: Request) {
       installments = 3,
       stock = 100,
       is_featured = false,
+      is_new = false,
     } = body;
 
     if (!name || price === undefined || price === null) {
@@ -184,8 +186,9 @@ export async function POST(request: Request) {
         installment_price,
         installments,
         stock,
-        is_featured
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        is_featured,
+        is_new
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *`,
       [
         name,
@@ -205,6 +208,7 @@ export async function POST(request: Request) {
         parseInt(String(installments), 10) || 3,
         parseInt(String(stock), 10) || 100,
         Boolean(is_featured),
+        Boolean(is_new),
       ]
     );
 

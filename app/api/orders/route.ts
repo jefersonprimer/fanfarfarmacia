@@ -5,6 +5,7 @@ import { ensureOrdersSchema } from "@/lib/orders";
 import { getDeliveryFee } from "@/lib/delivery-server";
 import { ensureCouponShippingColumn } from "@/lib/coupons-server";
 import { getStoreSchedule } from "@/lib/delivery-server";
+import { ensurePromotionsSchema } from "@/lib/promotions-schema";
 import { getScheduleError } from "@/lib/store-hours";
 
 export async function GET() {
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
   try {
     await ensureOrdersSchema();
     await ensureCouponShippingColumn();
+    await ensurePromotionsSchema();
     const body = await request.json();
     const { items, address, scheduledFor, freeShippingCouponCode } = body;
     if (!Array.isArray(items) || !items.length || items.length > 50) return NextResponse.json({ error: "Adicione produtos ao pedido." }, { status: 400 });
@@ -61,6 +63,18 @@ export async function POST(request: Request) {
       snapshot.push({ productId: product.id, name: product.name, slug: product.slug, image: product.images?.[0] ?? product.image_url ?? null, quantity, unitPrice, lineTotal: unitPrice * quantity });
     }
     let deliveryFee = await getDeliveryFee();
+    const freeShippingPromotions = await query(
+      `SELECT id FROM public.promotions
+       WHERE promotion_type = 'free_shipping'
+         AND active = true
+         AND starts_at <= NOW()
+         AND (expires_at IS NULL OR expires_at > NOW())
+         AND min_purchase <= $1
+       ORDER BY priority DESC, created_at DESC
+       LIMIT 1`,
+      [subtotal],
+    );
+    if (freeShippingPromotions.length > 0) deliveryFee = 0;
     if (typeof freeShippingCouponCode === "string" && freeShippingCouponCode.trim()) {
       const couponRows = await query(
         `SELECT * FROM public.coupons WHERE UPPER(code) = $1 LIMIT 1`,

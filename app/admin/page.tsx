@@ -400,7 +400,7 @@ export default function AdminProductsPage() {
 
       {scheduleModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/50 p-0 sm:items-center sm:p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget)
               setScheduleModalOpen(false);
@@ -410,7 +410,7 @@ export default function AdminProductsPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="schedule-modal-title"
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6"
+            className="h-dvh max-h-dvh w-full max-w-none overflow-y-auto rounded-none bg-white p-4 shadow-xl sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-xl sm:p-6"
           >
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>

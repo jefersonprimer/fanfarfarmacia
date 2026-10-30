@@ -3,6 +3,7 @@ import { pool } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { normalizePromotion, parsePromotionInput } from "@/lib/promotions";
 import type { PromotionInput } from "@/types/promotion";
+import { ensurePromotionsSchema } from "@/lib/promotions-schema";
 
 export async function PUT(
   request: Request,
@@ -17,6 +18,8 @@ export async function PUT(
         { status: 403 }
       );
     }
+
+    await ensurePromotionsSchema();
 
     const { id } = await params;
     const body: PromotionInput = await request.json();
@@ -36,24 +39,28 @@ export async function PUT(
         `UPDATE public.promotions SET
           name = $1,
           description = $2,
-          scope_type = $3,
-          discount_type = $4,
-          discount_value = $5,
-          min_quantity = $6,
-          max_discount = $7,
-          badge_label = $8,
-          priority = $9,
-          stackable = $10,
-          combinable_with_coupon = $11,
-          starts_at = COALESCE($12, starts_at),
-          expires_at = $13,
-          active = $14,
+          promotion_type = $3,
+          min_purchase = $4,
+          scope_type = $5,
+          discount_type = $6,
+          discount_value = $7,
+          min_quantity = $8,
+          max_discount = $9,
+          badge_label = $10,
+          priority = $11,
+          stackable = $12,
+          combinable_with_coupon = $13,
+          starts_at = COALESCE($14, starts_at),
+          expires_at = $15,
+          active = $16,
           updated_at = NOW()
-        WHERE id = $15
+        WHERE id = $17
         RETURNING *`,
         [
           data.name,
           data.description,
+          data.promotion_type,
+          data.min_purchase,
           data.scope_type,
           data.discount_type,
           data.discount_value,
