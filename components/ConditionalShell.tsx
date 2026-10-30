@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartToast from "@/components/CartToast";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import CookieConsent from "@/components/CookieConsent";
 
 const BLACK_WEEK_ROUTES = ["/black-week"];
 
@@ -18,7 +19,7 @@ function ConditionalShellContent({ children }: { children: React.ReactNode }) {
 
   if (isBlackWeek) {
     // A rota /black-week tem seu próprio layout com header/subheader temáticos
-    return <>{children}</>;
+    return <>{children}<CookieConsent /></>;
   }
 
   return (
@@ -29,6 +30,7 @@ function ConditionalShellContent({ children }: { children: React.ReactNode }) {
       <CartToast />
       {children}
       <Footer />
+      <CookieConsent />
     </>
   );
 }

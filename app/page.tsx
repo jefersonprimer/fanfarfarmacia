@@ -317,19 +317,30 @@ export default function Home() {
       <CategoryCarousel categories={HOME_CATEGORIES} />
 
       {loading ? (
-        <section className="py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-5 h-7 w-56 animate-pulse rounded bg-gray-200" />
-            <div className="flex gap-3 overflow-hidden">
-              {[0, 1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="h-80 w-[190px] shrink-0 animate-pulse rounded-2xl bg-gray-200 sm:w-[230px] lg:w-[250px]"
-                />
-              ))}
+        productSections.map((section) => (
+          <section
+            key={section.key}
+            aria-hidden="true"
+            className={`${section.variant === "dark" ? "bg-gray-900" : ""} py-8`}
+          >
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div
+                className={`mb-2 h-7 w-56 animate-pulse rounded ${section.variant === "dark" ? "bg-gray-700" : "bg-gray-200"}`}
+              />
+              <div
+                className={`mb-5 h-4 w-72 max-w-full animate-pulse rounded ${section.variant === "dark" ? "bg-gray-800" : "bg-gray-100"}`}
+              />
+              <div className="flex gap-3 overflow-hidden">
+                {[0, 1, 2, 3, 4].map((item) => (
+                  <div
+                    key={item}
+                    className={`h-80 w-[190px] shrink-0 animate-pulse rounded-2xl sm:w-[230px] lg:w-[250px] ${section.variant === "dark" ? "bg-gray-800" : "bg-gray-100"}`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ))
       ) : products.length > 0 ? (
         productSections.map((section) => (
           <ProductCarousel
