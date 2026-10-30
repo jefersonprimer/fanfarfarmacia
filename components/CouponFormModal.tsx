@@ -24,6 +24,10 @@ function toInputDate(value?: string | null) {
   )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function parseDecimal(value: string) {
+  return Number.parseFloat(value.replace(",", "."));
+}
+
 export default function CouponFormModal({
   coupon,
   onClose,
@@ -82,9 +86,9 @@ export default function CouponFormModal({
         code,
         description: description || null,
         discount_type: discountType,
-        discount_value: discountValue ? parseFloat(discountValue) : 0,
-        min_purchase: minPurchase ? parseFloat(minPurchase) : 0,
-        max_discount: maxDiscount ? parseFloat(maxDiscount) : null,
+        discount_value: discountValue ? parseDecimal(discountValue) : 0,
+        min_purchase: minPurchase ? parseDecimal(minPurchase) : 0,
+        max_discount: maxDiscount ? parseDecimal(maxDiscount) : null,
         free_shipping: freeShipping,
         usage_limit: usageLimit ? parseInt(usageLimit, 10) : null,
         starts_at: startsAt ? new Date(startsAt).toISOString() : null,
@@ -213,9 +217,8 @@ export default function CouponFormModal({
                   Valor do desconto *
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min={freeShipping ? "0" : "0.01"}
+                  type="text"
+                  inputMode="decimal"
                   required={!freeShipping}
                   value={discountValue}
                   onChange={(event) => setDiscountValue(event.target.value)}
@@ -231,9 +234,8 @@ export default function CouponFormModal({
                   Compra mínima (R$)
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   value={minPurchase}
                   onChange={(event) => setMinPurchase(event.target.value)}
                   placeholder="0.00"
@@ -246,9 +248,8 @@ export default function CouponFormModal({
                   Desconto máximo (R$)
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   value={maxDiscount}
                   onChange={(event) => setMaxDiscount(event.target.value)}
                   placeholder="Sem limite"
