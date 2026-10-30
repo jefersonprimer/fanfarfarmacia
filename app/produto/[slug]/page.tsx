@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import ProductCarousel from "@/components/ProductCarousel";
 import ProductFormModal from "@/components/ProductFormModal";
+import { WhatsAppIcon } from "@/components/WhatsAppIcon";
 import { useCart } from "@/hooks/useCart";
 import { getPromotedUnitPrice } from "@/lib/promotions";
 import { categoryPath, departmentPath, slugify } from "@/lib/catalog";
@@ -145,6 +146,7 @@ function ProductDetail() {
   const [isInList, setIsInList] = useState(false);
   const [listBusy, setListBusy] = useState(false);
   const [shareMessage, setShareMessage] = useState("");
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [copiedCouponId, setCopiedCouponId] = useState<string | null>(null);
   const [expandedCouponId, setExpandedCouponId] = useState<string | null>(null);
@@ -315,19 +317,20 @@ function ProductDetail() {
     }
   };
 
-  const handleShare = async () => {
-    if (!product || typeof window === "undefined") return;
-    const url = window.location.href;
+  const handleShare = () => {
+    if (!product) return;
+    setShareModalOpen(true);
+  };
+
+  const copyShareLink = async () => {
+    if (typeof window === "undefined") return;
     try {
-      if (navigator.share) await navigator.share({ title: product.name, url });
-      else {
-        await navigator.clipboard.writeText(url);
-        setShareMessage("Link do produto copiado.");
-        window.setTimeout(() => setShareMessage(""), 2500);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") return;
-      setShareMessage("Não foi possível compartilhar o produto.");
+      await navigator.clipboard.writeText(window.location.href);
+      setShareMessage("Link do produto copiado.");
+      window.setTimeout(() => setShareMessage(""), 2500);
+      setShareModalOpen(false);
+    } catch {
+      setShareMessage("Não foi possível copiar o link.");
     }
   };
 
@@ -444,8 +447,7 @@ function ProductDetail() {
   const requiresQuantity = promotion !== null && minQuantity > 1;
   const installmentPrice = product.installment_price ?? null;
   const installments = product.installments ?? 3;
-  const hasInstallment =
-    installmentPrice !== null && installments > 1 && !promoAppliesAtOne;
+  const hasInstallment = installmentPrice !== null && installments > 1;
   const inStock = product.stock > 0;
   const quantity =
     items.find((item) => item.product.id === product.id)?.quantity ?? 0;
@@ -547,6 +549,35 @@ function ProductDetail() {
                     <ZoomIn className="h-5 w-5" aria-hidden="true" />
                   </button>
                 )}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveImage(
+                          (current) =>
+                            (current - 1 + images.length) % images.length,
+                        )
+                      }
+                      className="absolute left-3 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-sm transition hover:border-green-300 hover:text-green-600"
+                      aria-label="Imagem anterior"
+                    >
+                      <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveImage(
+                          (current) => (current + 1) % images.length,
+                        )
+                      }
+                      className="absolute right-3 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-sm transition hover:border-green-300 hover:text-green-600"
+                      aria-label="Próxima imagem"
+                    >
+                      <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </>
+                )}
               </div>
 
               {images.length > 1 && (
@@ -576,11 +607,7 @@ function ProductDetail() {
           </div>
 
           <div className="mt-6 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
-            <div className="flex items-start justify-between gap-3">
-              <h1 className="text-xl font-bold leading-tight text-gray-900">
-                {product.name}
-              </h1>
-
+            <div className="flex flex-col items-start justify-between gap-3">
               {isAdmin && (
                 <div className="flex shrink-0 items-center gap-1">
                   <button
@@ -602,6 +629,10 @@ function ProductDetail() {
                   </button>
                 </div>
               )}
+
+              <h1 className="text-xl font-bold leading-tight text-gray-900">
+                {product.name}
+              </h1>
             </div>
 
             {product.brand && (
@@ -663,19 +694,21 @@ function ProductDetail() {
 
           <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-5">
-              {promoBadge && (
-                <span className="mb-2 inline-flex rounded-full bg-red-500 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
-                  {promoBadge}
-                </span>
-              )}
+              <div className="flex items-center justify-start gap-2">
+                {comparePrice !== null && (
+                  <span className="block text-sm text-gray-400 line-through">
+                    {currencyFormatter.format(comparePrice)}
+                  </span>
+                )}
 
-              {comparePrice !== null && (
-                <span className="block text-sm text-gray-400 line-through">
-                  {currencyFormatter.format(comparePrice)}
-                </span>
-              )}
+                {promoBadge && (
+                  <span className="mb-2 inline-flex rounded-full bg-red-500 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
+                    {promoBadge}
+                  </span>
+                )}
+              </div>
 
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900">
                 {currencyFormatter.format(displayPrice)}
               </p>
 
@@ -687,27 +720,14 @@ function ProductDetail() {
 
               {hasInstallment && installmentPrice !== null ? (
                 <p className="mt-1 text-sm text-gray-500">
-                  ou{" "}
                   <span className="font-semibold text-gray-700">
-                    {installments}x de{" "}
-                    {currencyFormatter.format(installmentPrice)}
+                    {installments}x {currencyFormatter.format(installmentPrice)}
                   </span>{" "}
-                  sem juros
+                  s/ juros
                 </p>
               ) : (
                 <p className="mt-1 text-sm text-gray-500">à vista</p>
               )}
-
-              <p
-                className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                  inStock
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-red-50 text-red-600"
-                }`}
-              >
-                <ShieldCheck className="h-3.5 w-3.5" />
-                {inStock ? "Em estoque" : "Indisponível"}
-              </p>
 
               <div className="mt-5">
                 {quantity === 0 ? (
@@ -715,9 +735,8 @@ function ProductDetail() {
                     type="button"
                     onClick={() => addToCart(product, 1)}
                     disabled={!inStock}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#279236] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-[#279236] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 cursor-pointer"
                   >
-                    <Plus className="h-4 w-4" />
                     Adicionar ao carrinho
                   </button>
                 ) : (
@@ -834,21 +853,17 @@ function ProductDetail() {
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#279236]/50 hover:text-[#279236]"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#279236]/50 hover:text-[#279236] cursor-pointer"
                 >
-                  <Share2 className="h-4 w-4" /> Compartilhar
+                  <Share2 size={20} /> Compartilhar
                 </button>
                 <button
                   type="button"
                   onClick={handleListToggle}
                   disabled={listBusy}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#279236]/50 hover:text-[#279236] disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#279236]/50 hover:text-[#279236] disabled:opacity-60 cursor-pointer"
                 >
-                  {isInList ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <ListPlus className="h-4 w-4" />
-                  )}
+                  {isInList ? <Check size={20} /> : <ListPlus size={20} />}
                   {listBusy
                     ? "Salvando..."
                     : isInList
@@ -867,11 +882,120 @@ function ProductDetail() {
 
               <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs text-gray-500">
                 <Truck className="h-4 w-4 text-[#279236]" />
-                Entrega para todo o Brasil
+                Entrega em Frederico Westphalen e região
               </div>
             </div>
           </div>
         </div>
+
+        {shareModalOpen && (
+          <div
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget)
+                setShareModalOpen(false);
+            }}
+          >
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="share-modal-title"
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <h2
+                    id="share-modal-title"
+                    className="text-xl font-bold text-gray-900"
+                  >
+                    Compartilhar
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Envie para quem vai comprar por você
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(false)}
+                  aria-label="Fechar compartilhamento"
+                  className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`${product.name} ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setShareModalOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  <WhatsAppIcon className="h-5 w-5 text-[#25D366]" />
+                  Compartilhar pelo WhatsApp
+                </a>
+                <a
+                  href={`mailto:?subject=${encodeURIComponent(`Olha este produto: ${product.name}`)}&body=${encodeURIComponent(`Oi! Encontrei este produto para você: ${typeof window !== "undefined" ? window.location.href : ""}`)}`}
+                  onClick={() => setShareModalOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 fill-[#EA4335]"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+                  </svg>
+                  Compartilhar pelo E-mail
+                </a>
+                <a
+                  href={`https://x.com/intent/post?text=${encodeURIComponent(product.name)}&url=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setShareModalOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 fill-black"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z" />
+                  </svg>
+                  Compartilhar pelo X
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setShareModalOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5 fill-[#1877F2]"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z" />
+                  </svg>
+                  Compartilhar pelo Facebook
+                </a>
+                <button
+                  type="button"
+                  onClick={copyShareLink}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                >
+                  <Copy className="h-5 w-5 text-gray-500" />
+                  Copiar link
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
 
         {zoomOpen && mainImage && (
           <div

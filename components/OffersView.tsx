@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -112,8 +113,11 @@ export default function OffersView() {
   const [error, setError] = useState<string | null>(null);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openFilterSections, setOpenFilterSections] = useState<
+    Record<string, boolean>
+  >({});
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
-    null
+    null,
   );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -124,6 +128,13 @@ export default function OffersView() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const productsTopRef = useRef<HTMLDivElement | null>(null);
+
+  const toggleFilterSection = (section: string) => {
+    setOpenFilterSections((previous) => ({
+      ...previous,
+      [section]: !previous[section],
+    }));
+  };
 
   useEffect(() => {
     let active = true;
@@ -162,7 +173,7 @@ export default function OffersView() {
 
   const offerProducts = useMemo(
     () => products.filter((product) => isOffer(product)),
-    [products]
+    [products],
   );
 
   const departments = useMemo(() => {
@@ -179,7 +190,8 @@ export default function OffersView() {
     if (!selectedDepartment) return offerProducts;
 
     return offerProducts.filter(
-      (product) => slugify(product.department ?? "") === slugify(selectedDepartment)
+      (product) =>
+        slugify(product.department ?? "") === slugify(selectedDepartment),
     );
   }, [offerProducts, selectedDepartment]);
 
@@ -197,7 +209,8 @@ export default function OffersView() {
     if (!selectedCategory) return departmentProducts;
 
     return departmentProducts.filter(
-      (product) => slugify(product.category ?? "") === slugify(selectedCategory)
+      (product) =>
+        slugify(product.category ?? "") === slugify(selectedCategory),
     );
   }, [departmentProducts, selectedCategory]);
 
@@ -260,7 +273,7 @@ export default function OffersView() {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredProducts.length / PAGE_SIZE)
+    Math.ceil(filteredProducts.length / PAGE_SIZE),
   );
 
   const safePage = Math.min(currentPage, totalPages);
@@ -292,7 +305,7 @@ export default function OffersView() {
     setSelectedBrands((previous) =>
       previous.includes(brand)
         ? previous.filter((item) => item !== brand)
-        : [...previous, brand]
+        : [...previous, brand],
     );
     setCurrentPage(1);
   };
@@ -353,26 +366,29 @@ export default function OffersView() {
   const pageItems = buildPageItems(totalPages, safePage);
 
   return (
-    <main className="flex-1 bg-gray-50">
+    <main className="flex-1 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <nav
           aria-label="Breadcrumb"
           className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500"
         >
-          <Link href="/" className="transition-colors hover:text-blue-600">
+          <Link
+            href="/"
+            className="transition-colors hover:text-[#279236] hover:underline"
+          >
             Início
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
           <span className="font-medium text-gray-700">Ofertas</span>
         </nav>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-4 flex items-start justify-between gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-              <Tag className="h-6 w-6 text-red-500" aria-hidden="true" />
+              <Tag size={24} aria-hidden="true" />
               Ofertas
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 hidden text-sm text-gray-500 sm:block">
               {loading
                 ? "Carregando ofertas..."
                 : `${filteredProducts.length} ${
@@ -386,7 +402,7 @@ export default function OffersView() {
           <button
             type="button"
             onClick={() => setFiltersOpen((previous) => !previous)}
-            className="inline-flex items-center gap-2 self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600 lg:hidden"
+            className="inline-flex items-center gap-2 self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#279236]/40 hover:text-[#279236] lg:hidden"
           >
             {filtersOpen ? (
               <X className="h-4 w-4" />
@@ -395,205 +411,306 @@ export default function OffersView() {
             )}
             Filtros
             {activeFilters > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-bold text-white">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#279236] px-1 text-[11px] font-bold text-white">
                 {activeFilters}
               </span>
             )}
           </button>
         </div>
 
+        {filtersOpen && (
+          <button
+            type="button"
+            aria-label="Fechar filtros"
+            onClick={() => setFiltersOpen(false)}
+            className="fixed inset-0 z-[79] bg-black/40 sm:hidden"
+          />
+        )}
+
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <aside
             className={`${
               filtersOpen ? "block" : "hidden"
-            } lg:sticky lg:top-24 lg:block lg:self-start`}
+            } fixed inset-x-0 bottom-0 z-[80] max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.16)] sm:static sm:z-auto sm:max-h-none sm:overflow-visible sm:rounded-none sm:bg-transparent sm:shadow-none lg:sticky lg:top-24 lg:block lg:self-start`}
           >
-            <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-4">
+            <div className="space-y-6 rounded-t-3xl border border-gray-200 bg-white p-4 sm:rounded-2xl">
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
                 <h2 className="flex items-center gap-2 text-sm font-bold text-gray-900">
-                  <Filter className="h-4 w-4 text-blue-600" />
+                  <Filter size={20} />
                   Filtros
                 </h2>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  disabled={!isFiltering}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 disabled:cursor-not-allowed disabled:text-gray-300"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Limpar
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    disabled={!isFiltering}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#279236] transition hover:text-[#1f7a2b] disabled:cursor-not-allowed disabled:text-gray-300"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Limpar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    aria-label="Fechar filtros"
+                    className="rounded-full p-1 text-gray-500 hover:bg-gray-100 sm:hidden"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Departamentos
-                </h3>
-                <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => selectDepartment(null)}
-                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-                        !selectedDepartment
-                          ? "bg-blue-50 font-semibold text-blue-700"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                      }`}
-                    >
-                      Todas as ofertas
-                    </button>
-                  </li>
-                  {departments.map((department) => (
-                    <li key={department}>
-                      <button
-                        type="button"
-                        onClick={() => selectDepartment(department)}
-                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-                          selectedDepartment === department
-                            ? "bg-blue-50 font-semibold text-blue-700"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                        }`}
-                      >
-                        <span className="truncate">{department}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {categories.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Categorias
-                  </h3>
-                  <ul className="max-h-64 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("departments")}
+                  aria-expanded={Boolean(openFilterSections.departments)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Departamentos
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.departments ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openFilterSections.departments && (
+                  <ul className="mt-2 max-h-56 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
                     <li>
                       <button
                         type="button"
-                        onClick={() => selectCategory(null)}
+                        onClick={() => selectDepartment(null)}
                         className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-                          !selectedCategory
-                            ? "bg-blue-50 font-semibold text-blue-700"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                          !selectedDepartment
+                            ? "bg-[#279236] font-semibold text-white"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
                         }`}
                       >
-                        Todas as categorias
+                        Todas as ofertas
                       </button>
                     </li>
-                    {categories.map((category) => (
-                      <li key={category}>
+                    {departments.map((department) => (
+                      <li key={department}>
                         <button
                           type="button"
-                          onClick={() => selectCategory(category)}
+                          onClick={() => selectDepartment(department)}
                           className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-                            selectedCategory === category
-                              ? "bg-blue-50 font-semibold text-blue-700"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                            selectedDepartment === department
+                              ? "bg-[#279236] font-semibold text-white"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
                           }`}
                         >
-                          <span className="truncate">{category}</span>
+                          <span className="truncate">{department}</span>
                         </button>
                       </li>
                     ))}
                   </ul>
+                )}
+              </div>
+
+              {categories.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterSection("categories")}
+                    aria-expanded={Boolean(openFilterSections.categories)}
+                    className="flex w-full items-center justify-between py-1 text-left"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      Categorias
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.categories ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {openFilterSections.categories && (
+                    <ul className="mt-2 max-h-64 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => selectCategory(null)}
+                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
+                            !selectedCategory
+                              ? "bg-[#279236] font-semibold text-white"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
+                          }`}
+                        >
+                          Todas as categorias
+                        </button>
+                      </li>
+                      {categories.map((category) => (
+                        <li key={category}>
+                          <button
+                            type="button"
+                            onClick={() => selectCategory(category)}
+                            className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
+                              selectedCategory === category
+                                ? "bg-[#279236] font-semibold text-white"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
+                            }`}
+                          >
+                            <span className="truncate">{category}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
               {brands.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Marcas
-                  </h3>
-                  <ul className="max-h-48 space-y-1.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
-                    {brands.map((brand) => (
-                      <li key={brand}>
-                        <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                          <input
-                            type="checkbox"
-                            checked={selectedBrands.includes(brand)}
-                            onChange={() => toggleBrand(brand)}
-                            className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
-                          />
-                          <span className="truncate">{brand}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterSection("brands")}
+                    aria-expanded={Boolean(openFilterSections.brands)}
+                    className="flex w-full items-center justify-between py-1 text-left"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      Marcas
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.brands ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {openFilterSections.brands && (
+                    <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                      {brands.map((brand) => (
+                        <li key={brand}>
+                          <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={selectedBrands.includes(brand)}
+                              onChange={() => toggleBrand(brand)}
+                              className="h-4 w-4 shrink-0 rounded border-gray-300 accent-[#279236]"
+                            />
+                            <span className="truncate">{brand}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Faixa de preço
-                </h3>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="0.01"
-                    value={priceMin}
-                    onChange={(event) => updatePriceMin(event.target.value)}
-                    placeholder={priceBounds ? `R$ ${priceBounds.min}` : "Mín."}
-                    aria-label="Preço mínimo"
-                    className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("price")}
+                  aria-expanded={Boolean(openFilterSections.price)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Faixa de preço
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.price ? "rotate-180" : ""}`}
                   />
-                  <span className="text-xs text-gray-400">até</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="0.01"
-                    value={priceMax}
-                    onChange={(event) => updatePriceMax(event.target.value)}
-                    placeholder={priceBounds ? `R$ ${priceBounds.max}` : "Máx."}
-                    aria-label="Preço máximo"
-                    className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
-                </div>
-                {priceBounds && (
-                  <p className="mt-2 text-[11px] text-gray-400">
-                    Ofertas de {currencyFormatter.format(priceBounds.min)} até{" "}
-                    {currencyFormatter.format(priceBounds.max)}
-                  </p>
+                </button>
+                {openFilterSections.price && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="0.01"
+                        value={priceMin}
+                        onChange={(event) => updatePriceMin(event.target.value)}
+                        placeholder={
+                          priceBounds ? `R$ ${priceBounds.min}` : "Mín."
+                        }
+                        aria-label="Preço mínimo"
+                        className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                      />
+                      <span className="text-xs text-gray-400">até</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="0.01"
+                        value={priceMax}
+                        onChange={(event) => updatePriceMax(event.target.value)}
+                        placeholder={
+                          priceBounds ? `R$ ${priceBounds.max}` : "Máx."
+                        }
+                        aria-label="Preço máximo"
+                        className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                      />
+                    </div>
+                    {priceBounds && (
+                      <p className="mt-2 text-[11px] text-gray-400">
+                        Ofertas de {currencyFormatter.format(priceBounds.min)}{" "}
+                        até {currencyFormatter.format(priceBounds.max)}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Desconto mínimo
-                </h3>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {DISCOUNT_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => updateMinDiscount(option.value)}
-                      className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition ${
-                        minDiscount === option.value
-                          ? "border-blue-600 bg-blue-50 text-blue-700"
-                          : "border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("discount")}
+                  aria-expanded={Boolean(openFilterSections.discount)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Desconto mínimo
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.discount ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openFilterSections.discount && (
+                  <div className="mt-2 grid grid-cols-3 gap-1.5">
+                    {DISCOUNT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateMinDiscount(option.value)}
+                        className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition ${
+                          minDiscount === option.value
+                            ? "border-[#279236] bg-[#279236] text-white"
+                            : "border-gray-200 text-gray-600 hover:border-[#279236]/40 hover:text-[#279236]"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Disponibilidade
-                </h3>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={onlyInStock}
-                    onChange={(event) => updateStockFilter(event.target.checked)}
-                    className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("availability")}
+                  aria-expanded={Boolean(openFilterSections.availability)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Disponibilidade
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.availability ? "rotate-180" : ""}`}
                   />
-                  <span>Somente em estoque</span>
-                </label>
+                </button>
+                {openFilterSections.availability && (
+                  <div className="mt-2">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={onlyInStock}
+                        onChange={(event) =>
+                          updateStockFilter(event.target.checked)
+                        }
+                        className="h-4 w-4 shrink-0 rounded border-gray-300 accent-[#279236]"
+                      />
+                      <span>Somente em estoque</span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </aside>
@@ -631,7 +748,7 @@ export default function OffersView() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#279236] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7a2b]"
                   >
                     <RotateCcw className="h-4 w-4" />
                     Limpar filtros
@@ -656,7 +773,7 @@ export default function OffersView() {
                       onClick={() => goToPage(safePage - 1)}
                       disabled={safePage === 1}
                       aria-label="Página anterior"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:text-gray-300"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition hover:border-[#279236]/40 hover:text-[#279236] disabled:cursor-not-allowed disabled:text-gray-300"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -667,13 +784,11 @@ export default function OffersView() {
                           key={item}
                           type="button"
                           onClick={() => goToPage(item)}
-                          aria-current={
-                            item === safePage ? "page" : undefined
-                          }
+                          aria-current={item === safePage ? "page" : undefined}
                           className={`flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-sm font-semibold transition ${
                             item === safePage
-                              ? "border-blue-600 bg-blue-600 text-white"
-                              : "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                              ? "border-[#279236] bg-[#279236] text-white"
+                              : "border-gray-200 bg-white text-gray-600 hover:border-[#279236]/40 hover:text-[#279236]"
                           }`}
                         >
                           {item}
@@ -686,7 +801,7 @@ export default function OffersView() {
                         >
                           {item}
                         </span>
-                      )
+                      ),
                     )}
 
                     <button
@@ -694,7 +809,7 @@ export default function OffersView() {
                       onClick={() => goToPage(safePage + 1)}
                       disabled={safePage === totalPages}
                       aria-label="Próxima página"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition hover:border-blue-300 hover:text-blue-600 disabled:cursor-not-allowed disabled:text-gray-300"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition hover:border-[#279236]/40 hover:text-[#279236] disabled:cursor-not-allowed disabled:text-gray-300"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -702,8 +817,7 @@ export default function OffersView() {
                 )}
 
                 <p className="mt-3 text-center text-xs text-gray-500">
-                  Página {safePage} de {totalPages} •{" "}
-                  {filteredProducts.length}{" "}
+                  Página {safePage} de {totalPages} • {filteredProducts.length}{" "}
                   {filteredProducts.length === 1 ? "oferta" : "ofertas"}
                 </p>
               </>

@@ -505,7 +505,7 @@ export default function SubHeader({ theme = "light" }: SubHeaderProps) {
             </Link>
 
             <Link
-              href="/cupons#primeira-compra"
+              href="/primeira-compra"
               className={theme === "dark"
                 ? "shrink-0 rounded-full px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/8 hover:text-white/90"
                 : "text-gray-700 hover:text-[#279236] hover:bg-neutral-100 rounded-full transition-colors whitespace-nowrap py-2 px-4 shrink-0"}

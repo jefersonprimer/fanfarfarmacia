@@ -11,6 +11,7 @@ import {
   LogOut,
   Shield,
   ChevronDown,
+  ChevronLeft,
   Package,
   PackageCheck,
   ListChecks,
@@ -64,7 +65,11 @@ function ProductSearchSkeleton({
     <div
       role="status"
       aria-label="Carregando produtos"
-      className={mobile ? `divide-y ${dark ? "divide-white/10" : "divide-gray-100"}` : "py-1"}
+      className={
+        mobile
+          ? `divide-y ${dark ? "divide-white/10" : "divide-gray-100"}`
+          : "py-1"
+      }
     >
       {[0, 1, 2].map((item) => (
         <div
@@ -75,8 +80,12 @@ function ProductSearchSkeleton({
             className={`shrink-0 animate-pulse rounded-lg ${dark ? "bg-white/10" : "bg-gray-100"} ${mobile ? "h-16 w-16" : "h-24 w-24"}`}
           />
           <div className="min-w-0 flex-1 space-y-2">
-            <div className={`h-3 w-4/5 animate-pulse rounded ${dark ? "bg-white/10" : "bg-gray-100"}`} />
-            <div className={`h-3 w-1/3 animate-pulse rounded ${dark ? "bg-white/10" : "bg-gray-100"}`} />
+            <div
+              className={`h-3 w-4/5 animate-pulse rounded ${dark ? "bg-white/10" : "bg-gray-100"}`}
+            />
+            <div
+              className={`h-3 w-1/3 animate-pulse rounded ${dark ? "bg-white/10" : "bg-gray-100"}`}
+            />
           </div>
         </div>
       ))}
@@ -162,6 +171,9 @@ export default function Header({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileNavSection, setMobileNavSection] = useState<
+    "departments" | "services" | null
+  >(null);
   const closeCart = useCallback(() => setCartOpen(false), []);
 
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -320,12 +332,21 @@ export default function Header({
     }
   };
 
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearchOpen(false);
+    setSearching(false);
+  };
+
   const displayName = user
     ? user.name?.trim() || user.email?.split("@")[0] || "Usuário"
     : null;
 
   const content = (
-    <header className={`sticky top-0 z-50 w-full shadow-sm border-b ${theme === "dark" ? "bg-black border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.6)]" : "bg-white border-gray-100"}`}>
+    <header
+      className={`sticky top-0 z-50 w-full shadow-sm border-b ${theme === "dark" ? "bg-black border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.6)]" : "bg-white border-gray-100"}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-4 sm:gap-6">
           {/* Menu e logo ficam juntos em telas pequenas */}
@@ -389,13 +410,7 @@ export default function Header({
                     >
                       Cupons
                     </Link>
-                    <Link
-                      href="/marcas"
-                      onClick={() => setMobileNavOpen(false)}
-                      className="block rounded-lg px-3 py-2.5 font-semibold text-gray-800 hover:bg-gray-50"
-                    >
-                      Nossas Marcas
-                    </Link>
+
                     <Link
                       href="/ofertas"
                       onClick={() => setMobileNavOpen(false)}
@@ -411,42 +426,98 @@ export default function Header({
                       Black Week
                     </Link>
                   </div>
-                  <h2 className="px-3 pb-1 pt-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+                  <button
+                    type="button"
+                    onClick={() => setMobileNavSection("departments")}
+                    className="flex w-full items-center justify-between border-b border-gray-100 px-3 py-3 text-left font-semibold text-gray-800 hover:bg-gray-50"
+                  >
                     Departamentos
-                  </h2>
-                  {DEPARTMENTS.map((department) => (
-                    <Link
-                      key={department.name}
-                      href={`/departamento/${slugify(department.name)}`}
-                      onClick={() => setMobileNavOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-50"
-                    >
-                      {department.name}
-                    </Link>
-                  ))}
-                  <h2 className="px-3 pb-1 pt-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+                    <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileNavSection("services")}
+                    className="flex w-full items-center justify-between border-b border-gray-100 px-3 py-3 text-left font-semibold text-gray-800 hover:bg-gray-50"
+                  >
                     Serviços de Saúde
-                  </h2>
-                  {[
-                    "Vacinas",
-                    "Teste de COVID",
-                    "Serviços farmacêuticos",
-                    "Exames clínicos",
-                    "Telessaúde",
-                    "Manipulação",
-                    "Jornada saudável na Vitat",
-                    "Dose Certa",
-                  ].map((service) => (
-                    <Link
-                      key={service}
-                      href={`/servicos-de-saude/${slugify(service)}`}
-                      onClick={() => setMobileNavOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-50"
-                    >
-                      {service}
-                    </Link>
-                  ))}
+                    <ChevronDown className="h-4 w-4 -rotate-90 text-gray-400" />
+                  </button>
                 </nav>
+                {mobileNavSection && (
+                  <section
+                    className="absolute inset-0 z-10 flex flex-col bg-white"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={
+                      mobileNavSection === "departments"
+                        ? "Departamentos"
+                        : "Serviços de Saúde"
+                    }
+                  >
+                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => setMobileNavSection(null)}
+                        aria-label="Voltar à navegação"
+                        className="flex min-w-0 items-center gap-1 rounded-lg py-1 pr-2 text-left text-base font-bold text-gray-900 hover:bg-gray-50"
+                      >
+                        <ChevronLeft className="h-5 w-5 shrink-0" />
+                        {mobileNavSection === "departments"
+                          ? "Departamentos"
+                          : "Serviços de Saúde"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileNavSection(null);
+                          setMobileNavOpen(false);
+                        }}
+                        aria-label="Fechar navegação"
+                        className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                    <nav className="flex-1 overflow-y-auto px-4 py-3 text-sm">
+                      {mobileNavSection === "departments"
+                        ? DEPARTMENTS.map((department) => (
+                            <Link
+                              key={department.name}
+                              href={`/departamento/${slugify(department.name)}`}
+                              onClick={() => {
+                                setMobileNavSection(null);
+                                setMobileNavOpen(false);
+                              }}
+                              className="block rounded-lg px-3 py-3 text-gray-700 hover:bg-gray-50"
+                            >
+                              {department.name}
+                            </Link>
+                          ))
+                        : [
+                            "Vacinas",
+                            "Teste de COVID",
+                            "Serviços farmacêuticos",
+                            "Exames clínicos",
+                            "Telessaúde",
+                            "Manipulação",
+                            "Jornada saudável na Vitat",
+                            "Dose Certa",
+                          ].map((service) => (
+                            <Link
+                              key={service}
+                              href={`/servicos-de-saude/${slugify(service)}`}
+                              onClick={() => {
+                                setMobileNavSection(null);
+                                setMobileNavOpen(false);
+                              }}
+                              className="block rounded-lg px-3 py-3 text-gray-700 hover:bg-gray-50"
+                            >
+                              {service}
+                            </Link>
+                          ))}
+                    </nav>
+                  </section>
+                )}
               </aside>
             </div>
           )}
@@ -472,8 +543,18 @@ export default function Header({
                 }}
                 placeholder="O que você procura hoje?"
                 autoComplete="off"
-                className="w-full pl-11 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-full text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1f7a2b] focus:bg-white focus:border-transparent transition duration-200"
+                className="w-full pl-11 pr-10 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-full text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1f7a2b] focus:bg-white focus:border-transparent transition duration-200"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  aria-label="Limpar pesquisa"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+                >
+                  <X size={20} aria-hidden="true" />
+                </button>
+              )}
 
               {searchOpen && (
                 <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
@@ -514,7 +595,7 @@ export default function Header({
                                   />
                                 )}
                                 {badgeText && (
-                                  <span className="absolute left-1 top-1 rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                  <span className="absolute right-1 top-1 rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
                                     {badgeText}
                                   </span>
                                 )}
@@ -562,7 +643,7 @@ export default function Header({
                     aria-hidden="true"
                   />
                   <input
-                    type="search"
+                    type="text"
                     autoFocus
                     value={searchQuery}
                     onChange={(event) => handleSearchChange(event.target.value)}
@@ -571,8 +652,18 @@ export default function Header({
                     }}
                     placeholder="O que você procura hoje?"
                     autoComplete="off"
-                    className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-11 pr-4 text-sm text-gray-800 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-[#1f7a2b]"
+                    className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-11 pr-10 text-sm text-gray-800 placeholder-gray-400 transition duration-200 focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1f7a2b]"
                   />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={clearSearch}
+                      aria-label="Limpar pesquisa"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  )}
                 </form>
                 <button
                   type="button"
@@ -581,9 +672,9 @@ export default function Header({
                     setSearchOpen(false);
                   }}
                   aria-label="Fechar pesquisa"
-                  className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                  className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
                 >
-                  <X className="h-5 w-5" />
+                  <X size={20} />
                 </button>
               </div>
               <div className="h-[calc(100dvh-4.25rem)] overflow-y-auto">
@@ -599,41 +690,41 @@ export default function Header({
                       {searchResults.map((product) => {
                         const badgeText = getProductBadge(product);
                         return (
-                        <li key={product.id}>
-                          <Link
-                            href={`/produto/${product.slug}`}
-                            onClick={() => {
-                              setMobileSearchOpen(false);
-                              setSearchOpen(false);
-                            }}
-                            className="mx-3 my-2 flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-3 hover:border-gray-300 hover:bg-gray-50"
-                          >
-                            <span className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg">
-                              {product.images?.[0] ? (
-                                <img
-                                  src={product.images[0]}
-                                  alt=""
-                                  className="h-full w-full object-contain p-1"
-                                />
-                              ) : (
-                                <Package className="h-5 w-5 text-gray-300" />
-                              )}
-                              {badgeText && (
-                                <span className="absolute left-0.5 top-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white shadow-sm">
-                                  {badgeText}
+                          <li key={product.id}>
+                            <Link
+                              href={`/produto/${product.slug}`}
+                              onClick={() => {
+                                setMobileSearchOpen(false);
+                                setSearchOpen(false);
+                              }}
+                              className="mx-3 my-2 flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-3 hover:border-gray-300 hover:bg-gray-50"
+                            >
+                              <span className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                                {product.images?.[0] ? (
+                                  <img
+                                    src={product.images[0]}
+                                    alt=""
+                                    className="h-full w-full object-contain p-1"
+                                  />
+                                ) : (
+                                  <Package className="h-5 w-5 text-gray-300" />
+                                )}
+                                {badgeText && (
+                                  <span className="absolute right-0.5 top-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                    {badgeText}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-normal text-gray-800">
+                                  {product.name}
                                 </span>
-                              )}
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block text-sm font-normal text-gray-800">
-                                {product.name}
+                                <span className="mt-1 block text-sm font-bold text-gray-900">
+                                  {currencyFormatter.format(product.price)}
+                                </span>
                               </span>
-                              <span className="mt-1 block text-sm font-bold text-gray-900">
-                                {currencyFormatter.format(product.price)}
-                              </span>
-                            </span>
-                          </Link>
-                        </li>
+                            </Link>
+                          </li>
                         );
                       })}
                     </ul>
@@ -799,7 +890,9 @@ export default function Header({
             >
               <ShoppingBag className="h-6 w-6" />
               {cartItemCount > 0 && (
-                <span className={`absolute bottom-0 right-0 flex items-center justify-center min-w-5 h-5 px-1 text-xs font-bold rounded-full shadow-sm ${theme === "dark" ? "text-black bg-yellow-400" : "text-white bg-red-500"}`}>
+                <span
+                  className={`absolute bottom-0 right-0 flex items-center justify-center min-w-5 h-5 px-1 text-xs font-bold rounded-full shadow-sm ${theme === "dark" ? "text-black bg-yellow-400" : "text-white bg-red-500"}`}
+                >
                   {cartItemCount}
                 </span>
               )}

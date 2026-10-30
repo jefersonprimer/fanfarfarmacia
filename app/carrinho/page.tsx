@@ -255,7 +255,7 @@ export default function CartPage() {
   };
 
   return (
-    <main className="flex-1 bg-gray-50">
+    <main className="flex-1 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="mt-4 text-2xl font-bold text-gray-900">Meu carrinho</h1>
 
@@ -273,7 +273,7 @@ export default function CartPage() {
             </p>
             <Link
               href="/"
-              className="mt-6 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="mt-6 rounded-full bg-[#279236] hover:bg-[#279236]/80 px-5 py-2.5 text-sm font-semibold text-white transition "
             >
               Ver produtos
             </Link>

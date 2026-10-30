@@ -220,7 +220,7 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 border-b border-gray-200 pb-4 ">
           <div>
@@ -429,9 +429,9 @@ export default function AdminProductsPage() {
                 type="button"
                 onClick={() => setScheduleModalOpen(false)}
                 aria-label="Fechar modal"
-                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
               >
-                <X className="h-5 w-5" />
+                <X size={24} />
               </button>
             </div>
             <form

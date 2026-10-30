@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Filter, Package, RotateCcw, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Filter,
+  Package,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { DEPARTMENTS } from "@/lib/departments";
 import {
@@ -39,6 +46,9 @@ export default function CatalogView({
   const [error, setError] = useState<string | null>(null);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openFilterSections, setOpenFilterSections] = useState<
+    Record<string, boolean>
+  >({});
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
@@ -273,6 +283,13 @@ export default function CatalogView({
     );
   };
 
+  const toggleFilterSection = (section: string) => {
+    setOpenFilterSections((previous) => ({
+      ...previous,
+      [section]: !previous[section],
+    }));
+  };
+
   const clearFilters = () => {
     setSelectedBrands([]);
     setPriceMin("");
@@ -286,7 +303,7 @@ export default function CatalogView({
   };
 
   return (
-    <main className="flex-1 bg-gray-50">
+    <main className="flex-1 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <nav
           aria-label="Breadcrumb"
@@ -334,12 +351,12 @@ export default function CatalogView({
           )}
         </nav>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-4 flex items-start justify-between gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
               {pageTitle}
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 hidden text-sm text-gray-500 sm:block">
               {loading
                 ? "Carregando produtos..."
                 : `${filteredProducts.length} ${
@@ -353,7 +370,7 @@ export default function CatalogView({
           <button
             type="button"
             onClick={() => setFiltersOpen((previous) => !previous)}
-            className="inline-flex items-center gap-2 self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-blue-300 hover:text-blue-600 lg:hidden"
+            className="inline-flex items-center gap-2 self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#279236]/40 hover:text-[#279236] lg:hidden"
           >
             {filtersOpen ? (
               <X className="h-4 w-4" />
@@ -362,218 +379,319 @@ export default function CatalogView({
             )}
             Filtros
             {activeFilters > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-bold text-white">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#279236] px-1 text-[11px] font-bold text-white">
                 {activeFilters}
               </span>
             )}
           </button>
         </div>
 
+        {filtersOpen && (
+          <button
+            type="button"
+            aria-label="Fechar filtros"
+            onClick={() => setFiltersOpen(false)}
+            className="fixed inset-0 z-[79] bg-black/40 sm:hidden"
+          />
+        )}
+
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
           <aside
             className={`${
               filtersOpen ? "block" : "hidden"
-            } lg:sticky lg:top-24 lg:block lg:self-start`}
+            } fixed inset-x-0 bottom-0 z-[80] max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white shadow-[0_-12px_40px_rgba(0,0,0,0.16)] sm:static sm:z-auto sm:max-h-none sm:overflow-visible sm:rounded-none sm:bg-transparent sm:shadow-none lg:sticky lg:top-24 lg:block lg:self-start`}
           >
-            <div className="space-y-6 rounded-2xl border border-gray-200 bg-white p-4">
+            <div className="space-y-6 rounded-t-3xl border border-gray-200 bg-white p-4 sm:rounded-2xl">
               <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
                 <h2 className="flex items-center gap-2 text-sm font-bold text-gray-900">
-                  <Filter className="h-4 w-4 text-blue-600" />
+                  <Filter size={20} />
                   Filtros
                 </h2>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  disabled={activeFilters === 0 && !categorySlug}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-700 disabled:cursor-not-allowed disabled:text-gray-300"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Limpar
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    disabled={activeFilters === 0 && !categorySlug}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#279236] transition hover:text-[#1f7a2b] disabled:cursor-not-allowed disabled:text-gray-300"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Limpar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    aria-label="Fechar filtros"
+                    className="rounded-full p-1 text-gray-500 hover:bg-gray-100 sm:hidden"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Departamentos
-                </h3>
-                <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
-                  <li>
-                    <Link
-                      href="/departamento"
-                      className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
-                        !departmentSlug
-                          ? "bg-blue-50 font-semibold text-blue-700"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                      }`}
-                    >
-                      <span>Todos os produtos</span>
-                    </Link>
-                  </li>
-                  {departments.map((department) => {
-                    const isActive = slugify(department) === departmentSlug;
-
-                    return (
-                      <li key={department}>
-                        <Link
-                          href={`/departamento/${slugify(department)}`}
-                          className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
-                            isActive
-                              ? "bg-blue-50 font-semibold text-blue-700"
-                              : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
-                          }`}
-                        >
-                          <span className="truncate">{department}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-
-              {departmentSlug && categories.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Categorias
-                  </h3>
-                  <ul className="max-h-64 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("departments")}
+                  aria-expanded={Boolean(openFilterSections.departments)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Departamentos
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.departments ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openFilterSections.departments && (
+                  <ul className="mt-2 max-h-56 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
                     <li>
                       <Link
-                        href={currentDepartmentPath}
+                        href="/departamento"
                         className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
-                          !categorySlug
-                            ? "bg-blue-50 font-semibold text-blue-700"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                          !departmentSlug
+                            ? "bg-[#279236] font-semibold text-white"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
                         }`}
                       >
-                        <span>Todas as categorias</span>
+                        <span>Todos os produtos</span>
                       </Link>
                     </li>
-                    {categories.map((category) => {
-                      const isActive = slugify(category) === categorySlug;
+                    {departments.map((department) => {
+                      const isActive = slugify(department) === departmentSlug;
 
                       return (
-                        <li key={category}>
+                        <li key={department}>
                           <Link
-                            href={`${currentDepartmentPath}/${slugify(category)}`}
+                            href={`/departamento/${slugify(department)}`}
                             className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
                               isActive
-                                ? "bg-blue-50 font-semibold text-blue-700"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                ? "bg-[#279236] font-semibold text-white"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
                             }`}
                           >
-                            <span className="truncate">{category}</span>
+                            <span className="truncate">{department}</span>
                           </Link>
                         </li>
                       );
                     })}
                   </ul>
+                )}
+              </div>
+
+              {departmentSlug && categories.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterSection("categories")}
+                    aria-expanded={Boolean(openFilterSections.categories)}
+                    className="flex w-full items-center justify-between py-1 text-left"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      Categorias
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.categories ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {openFilterSections.categories && (
+                    <ul className="mt-2 max-h-64 space-y-0.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                      <li>
+                        <Link
+                          href={currentDepartmentPath}
+                          className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
+                            !categorySlug
+                              ? "bg-[#279236] font-semibold text-white"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
+                          }`}
+                        >
+                          <span>Todas as categorias</span>
+                        </Link>
+                      </li>
+                      {categories.map((category) => {
+                        const isActive = slugify(category) === categorySlug;
+
+                        return (
+                          <li key={category}>
+                            <Link
+                              href={`${currentDepartmentPath}/${slugify(category)}`}
+                              className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
+                                isActive
+                                  ? "bg-[#279236] font-semibold text-white"
+                                  : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"
+                              }`}
+                            >
+                              <span className="truncate">{category}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
               )}
 
               {categorySlug && subcategories.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Subcategorias
-                  </h3>
-                  <ul className="space-y-0.5">
-                    {subcategories.map((subcategory) => (
-                      <li key={subcategory}>
-                        <Link
-                          href={`${currentDepartmentPath}/${categorySlug}/${slugify(subcategory)}`}
-                          className={`block rounded-lg px-2.5 py-1.5 text-sm ${slugify(subcategory) === subcategorySlug ? "bg-blue-50 font-semibold text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}
-                        >
-                          {subcategory}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterSection("subcategories")}
+                    aria-expanded={Boolean(openFilterSections.subcategories)}
+                    className="flex w-full items-center justify-between py-1 text-left"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      Subcategorias
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.subcategories ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {openFilterSections.subcategories && (
+                    <ul className="mt-2 space-y-0.5">
+                      {subcategories.map((subcategory) => (
+                        <li key={subcategory}>
+                          <Link
+                            href={`${currentDepartmentPath}/${categorySlug}/${slugify(subcategory)}`}
+                            className={`block rounded-lg px-2.5 py-1.5 text-sm ${slugify(subcategory) === subcategorySlug ? "bg-[#279236] font-semibold text-white" : "text-gray-600 hover:bg-gray-50 hover:text-[#279236]"}`}
+                          >
+                            {subcategory}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
               {brands.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Marcas
-                  </h3>
-                  <ul className="max-h-48 space-y-1.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
-                    {brands.map((brand) => (
-                      <li key={brand}>
-                        <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                          <input
-                            type="checkbox"
-                            checked={selectedBrands.includes(brand)}
-                            onChange={() => toggleBrand(brand)}
-                            className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
-                          />
-                          <span className="truncate">{brand}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => toggleFilterSection("brands")}
+                    aria-expanded={Boolean(openFilterSections.brands)}
+                    className="flex w-full items-center justify-between py-1 text-left"
+                  >
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      Marcas
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.brands ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {openFilterSections.brands && (
+                    <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
+                      {brands.map((brand) => (
+                        <li key={brand}>
+                          <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={selectedBrands.includes(brand)}
+                              onChange={() => toggleBrand(brand)}
+                              className="h-4 w-4 shrink-0 rounded border-gray-300 accent-[#279236]"
+                            />
+                            <span className="truncate">{brand}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Faixa de preço
-                </h3>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="0.01"
-                    value={priceMin}
-                    onChange={(event) => setPriceMin(event.target.value)}
-                    placeholder={priceBounds ? `R$ ${priceBounds.min}` : "Mín."}
-                    aria-label="Preço mínimo"
-                    className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("price")}
+                  aria-expanded={Boolean(openFilterSections.price)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Faixa de preço
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.price ? "rotate-180" : ""}`}
                   />
-                  <span className="text-xs text-gray-400">até</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="0.01"
-                    value={priceMax}
-                    onChange={(event) => setPriceMax(event.target.value)}
-                    placeholder={priceBounds ? `R$ ${priceBounds.max}` : "Máx."}
-                    aria-label="Preço máximo"
-                    className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
-                </div>
-                {priceBounds && (
-                  <p className="mt-2 text-[11px] text-gray-400">
-                    Produtos de {currencyFormatter.format(priceBounds.min)} até{" "}
-                    {currencyFormatter.format(priceBounds.max)}
-                  </p>
+                </button>
+                {openFilterSections.price && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="0.01"
+                        value={priceMin}
+                        onChange={(event) => setPriceMin(event.target.value)}
+                        placeholder={
+                          priceBounds ? `R$ ${priceBounds.min}` : "Mín."
+                        }
+                        aria-label="Preço mínimo"
+                        className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                      />
+                      <span className="text-xs text-gray-400">até</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="0.01"
+                        value={priceMax}
+                        onChange={(event) => setPriceMax(event.target.value)}
+                        placeholder={
+                          priceBounds ? `R$ ${priceBounds.max}` : "Máx."
+                        }
+                        aria-label="Preço máximo"
+                        className="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2 text-sm text-gray-900 transition focus:border-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#279236]"
+                      />
+                    </div>
+                    {priceBounds && (
+                      <p className="mt-2 text-[11px] text-gray-400">
+                        Produtos de {currencyFormatter.format(priceBounds.min)}{" "}
+                        até {currencyFormatter.format(priceBounds.max)}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
               <div>
-                <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Ofertas e estoque
-                </h3>
-                <div className="space-y-1.5">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                    <input
-                      type="checkbox"
-                      checked={onlyOffers}
-                      onChange={(event) => setOnlyOffers(event.target.checked)}
-                      className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
-                    />
-                    <span>Somente ofertas</span>
-                  </label>
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                    <input
-                      type="checkbox"
-                      checked={onlyInStock}
-                      onChange={(event) => setOnlyInStock(event.target.checked)}
-                      className="h-4 w-4 shrink-0 rounded border-gray-300 accent-blue-600"
-                    />
-                    <span>Somente em estoque</span>
-                  </label>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleFilterSection("availability")}
+                  aria-expanded={Boolean(openFilterSections.availability)}
+                  className="flex w-full items-center justify-between py-1 text-left"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                    Ofertas e estoque
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-gray-400 transition-transform ${openFilterSections.availability ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openFilterSections.availability && (
+                  <div className="space-y-1.5">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={onlyOffers}
+                        onChange={(event) =>
+                          setOnlyOffers(event.target.checked)
+                        }
+                        className="h-4 w-4 shrink-0 rounded border-gray-300 accent-[#279236]"
+                      />
+                      <span>Somente ofertas</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={onlyInStock}
+                        onChange={(event) =>
+                          setOnlyInStock(event.target.checked)
+                        }
+                        className="h-4 w-4 shrink-0 rounded border-gray-300 accent-[#279236]"
+                      />
+                      <span>Somente em estoque</span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </aside>
@@ -608,7 +726,7 @@ export default function CatalogView({
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#279236] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f7a2b]"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Limpar filtros

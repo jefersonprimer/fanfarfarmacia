@@ -2,13 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  CalendarClock,
-  Pencil,
-  Plus,
-  Tag,
-  Trash2,
-} from "lucide-react";
+import { CalendarClock, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import PromotionFormModal from "@/components/PromotionFormModal";
 import type { Promotion, PromotionScope } from "@/types/promotion";
 import type { Product } from "@/types/product";
@@ -79,7 +73,7 @@ export default function PromotionsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(
-    null
+    null,
   );
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -172,7 +166,7 @@ export default function PromotionsPage() {
 
       if (response.ok) {
         setPromotions((previous) =>
-          previous.filter((item) => item.id !== promotion.id)
+          previous.filter((item) => item.id !== promotion.id),
         );
         setFeedback({
           type: "success",
@@ -196,16 +190,16 @@ export default function PromotionsPage() {
 
     const values = promotion.targets.map((target) =>
       target.type === "product"
-        ? productNames.get(target.value) ?? target.value
-        : target.value
+        ? (productNames.get(target.value) ?? target.value)
+        : target.value,
     );
 
     return values.join(", ");
   };
 
   return (
-    <main className="flex-1 bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="flex-1 bg-white">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Promoções</h1>
@@ -226,7 +220,7 @@ export default function PromotionsPage() {
               <button
                 type="button"
                 onClick={openCreateModal}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#279236] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#1f7a2b] sm:col-auto sm:text-sm"
               >
                 <Plus className="h-4 w-4" />
                 Nova promoção
@@ -369,7 +363,10 @@ export default function PromotionsPage() {
                         : "Não concatena com cupom"}
                     </li>
                     <li className="flex items-center gap-1">
-                      <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+                      <CalendarClock
+                        className="h-3.5 w-3.5"
+                        aria-hidden="true"
+                      />
                       {formatDate(promotion.starts_at)}
                       {promotion.expires_at
                         ? ` até ${formatDate(promotion.expires_at)}`

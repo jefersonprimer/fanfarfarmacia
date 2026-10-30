@@ -75,10 +75,10 @@ export default function ProductCarousel({
             type="button"
             onClick={() => scroll(-1)}
             aria-label="Produtos anteriores"
-            className={`absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition sm:flex ${
+            className={`absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition sm:flex ${
               isDark
-                ? "border-gray-700 bg-gray-800/95 text-gray-200 hover:border-amber-400 hover:text-amber-400"
-                : "border-gray-200 bg-white/95 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                ? "border-gray-700 bg-gray-800/95 text-gray-200 hover:border-gray-500 hover:bg-gray-700 hover:text-white"
+                : "border-gray-200 bg-white/95 text-gray-600 hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -87,10 +87,10 @@ export default function ProductCarousel({
             type="button"
             onClick={() => scroll(1)}
             aria-label="Próximos produtos"
-            className={`absolute right-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition sm:flex ${
+            className={`absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition sm:flex ${
               isDark
-                ? "border-gray-700 bg-gray-800/95 text-gray-200 hover:border-amber-400 hover:text-amber-400"
-                : "border-gray-200 bg-white/95 text-gray-600 hover:border-blue-300 hover:text-blue-600"
+                ? "border-gray-700 bg-gray-800/95 text-gray-200 hover:border-gray-500 hover:bg-gray-700 hover:text-white"
+                : "border-gray-200 bg-white/95 text-gray-600 hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900"
             }`}
           >
             <ChevronRight className="h-5 w-5" />

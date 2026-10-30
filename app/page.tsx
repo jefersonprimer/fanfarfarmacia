@@ -209,7 +209,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="flex-1 bg-gray-50">
+    <main className="flex-1 bg-white">
       <SubHeader />
       <section className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
