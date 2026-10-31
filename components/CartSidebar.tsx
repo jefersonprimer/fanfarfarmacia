@@ -103,7 +103,7 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
               aria-hidden="true"
             />
             <h3 className="mt-4 text-lg font-bold text-gray-900">
-              Sua cesta está vazio
+              Sua cesta está vazia
             </h3>
             <p className="mt-1 text-sm text-gray-500">
               Adicione produtos para continuar.
