@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Fanfar - Farmácia Online | Rémedios, Medicamentos e muito mais",
   description:
     "Sua farmácia online completa com remédios, medicamentos, itens de saúde, beleza e muito mais com entrega rápida.",
+  verification: {
+    google: "iFNvvYLli4pLzw8Ne01U4uBkal2KzUsQdMzQ8Wjcy5M",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
