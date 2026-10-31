@@ -53,7 +53,8 @@ export default function CartPage() {
   const nextFreeShippingPromotion = freeShippingPromotions
     .filter((promotion) => total < promotion.min_purchase)
     .sort((a, b) => a.min_purchase - b.min_purchase)[0];
-  const freeShipping = coupon?.free_shipping === true || Boolean(qualifyingFreeShippingPromotion);
+  const freeShipping =
+    coupon?.free_shipping === true || Boolean(qualifyingFreeShippingPromotion);
 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -264,7 +265,7 @@ export default function CartPage() {
   return (
     <main className="flex-1 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">Meu carrinho</h1>
+        <h1 className="mt-4 text-2xl font-bold text-gray-900">Minha cesta</h1>
 
         {items.length === 0 ? (
           <div className="mt-6 flex flex-col items-center rounded-2xl border border-gray-200 bg-white px-4 py-16 text-center">
@@ -273,7 +274,7 @@ export default function CartPage() {
               aria-hidden="true"
             />
             <h2 className="mt-4 text-lg font-bold text-gray-900">
-              Seu carrinho está vazio
+              Sua cesta está vazio
             </h2>
             <p className="mt-1 text-sm text-gray-500">
               Adicione produtos para continuar.
@@ -547,7 +548,11 @@ export default function CartPage() {
                 </div>
                 {!freeShipping && nextFreeShippingPromotion && (
                   <p className="text-right text-xs text-gray-500">
-                    Faltam {currencyFormatter.format(nextFreeShippingPromotion.min_purchase - total)} para ganhar frete grátis.
+                    Faltam{" "}
+                    {currencyFormatter.format(
+                      nextFreeShippingPromotion.min_purchase - total,
+                    )}{" "}
+                    para ganhar frete grátis.
                   </p>
                 )}
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-base font-bold text-gray-900">
@@ -797,7 +802,9 @@ export default function CartPage() {
                   disabled={checkoutLoading || Boolean(scheduleError)}
                   className="rounded-xl bg-[#279236] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:opacity-60 cursor-pointer"
                 >
-                  {checkoutLoading ? "Preparando pagamento..." : "Ir para o pagamento"}
+                  {checkoutLoading
+                    ? "Preparando pagamento..."
+                    : "Ir para o pagamento"}
                 </button>
               </footer>
             </form>

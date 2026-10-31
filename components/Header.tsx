@@ -47,13 +47,24 @@ function getProductBadge(product: Product) {
   return (
     product.promotional_badge ??
     promotion?.badge_label ??
-    (product.is_new ? "Acabou de chegar" : null) ??
+    (product.is_new ? "Novidade" : null) ??
     (promotion && minQuantity > 1
       ? `Leve ${minQuantity}+`
       : promoAppliesAtOne
         ? "Oferta"
         : null)
   );
+}
+
+function isNewProductBadge(badgeText: string) {
+  const normalized = badgeText.toLocaleLowerCase("pt-BR");
+  return normalized === "novidade" || normalized === "acabou de chegar";
+}
+
+function getSearchBadgeClass(badgeText: string, mobile = false) {
+  return isNewProductBadge(badgeText)
+    ? `absolute left-1 top-1 rounded-br-xl rounded-tl-xl bg-[#279236] ${mobile ? "px-1.5 py-0.5 text-[8px]" : "px-2.5 py-1 text-[9px]"} font-black uppercase tracking-wide text-white shadow-md`
+    : `absolute ${mobile ? "right-0.5 top-0.5 px-1.5 py-0.5 text-[8px]" : "right-1 top-1 px-2 py-0.5 text-[9px]"} rounded-full bg-red-500 font-bold uppercase tracking-wide text-white shadow-sm`;
 }
 
 function ProductSearchSkeleton({
@@ -616,7 +627,7 @@ export default function Header({
                                   />
                                 )}
                                 {badgeText && (
-                                  <span className="absolute right-1 top-1 rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                  <span className={getSearchBadgeClass(badgeText)}>
                                     {badgeText}
                                   </span>
                                 )}
@@ -731,7 +742,7 @@ export default function Header({
                                   <Package className="h-5 w-5 text-gray-300" />
                                 )}
                                 {badgeText && (
-                                  <span className="absolute right-0.5 top-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                  <span className={getSearchBadgeClass(badgeText, true)}>
                                     {badgeText}
                                   </span>
                                 )}

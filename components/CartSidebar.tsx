@@ -31,9 +31,9 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
     setCartQuantity,
     removeFromCart,
   } = useCart();
-  const freeShipping = coupon?.free_shipping === true || freeShippingPromotions.some(
-    (promotion) => total >= promotion.min_purchase,
-  );
+  const freeShipping =
+    coupon?.free_shipping === true ||
+    freeShippingPromotions.some((promotion) => total >= promotion.min_purchase);
 
   useEffect(() => {
     if (!open) return;
@@ -78,7 +78,7 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-bold text-gray-900">
-              Minha sacola
+              Minha cesta
               {itemCount > 0 && (
                 <span className="ml-1.5 text-sm font-medium text-gray-500">
                   ({itemCount})
@@ -103,7 +103,7 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
               aria-hidden="true"
             />
             <h3 className="mt-4 text-lg font-bold text-gray-900">
-              Seu carrinho está vazio
+              Sua cesta está vazio
             </h3>
             <p className="mt-1 text-sm text-gray-500">
               Adicione produtos para continuar.
@@ -275,7 +275,7 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
                 onClick={onClose}
                 className="mt-4 flex w-full items-center justify-center rounded-full bg-[#279236] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b]"
               >
-                Ver carrinho e finalizar
+                Ver cesta e finalizar
               </Link>
               <button
                 type="button"
