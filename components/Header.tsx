@@ -612,7 +612,7 @@ export default function Header({
                               onClick={() => setSearchOpen(false)}
                               className="mx-2 my-1 flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 transition-colors hover:border-gray-300 hover:bg-gray-50"
                             >
-                              <span className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                              <span className="relative flex h-28 w-28 sm:h-24 sm:w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg">
                                 {image ? (
                                   <img
                                     src={image}
@@ -627,7 +627,9 @@ export default function Header({
                                   />
                                 )}
                                 {badgeText && (
-                                  <span className={getSearchBadgeClass(badgeText)}>
+                                  <span
+                                    className={getSearchBadgeClass(badgeText)}
+                                  >
                                     {badgeText}
                                   </span>
                                 )}
@@ -742,7 +744,12 @@ export default function Header({
                                   <Package className="h-5 w-5 text-gray-300" />
                                 )}
                                 {badgeText && (
-                                  <span className={getSearchBadgeClass(badgeText, true)}>
+                                  <span
+                                    className={getSearchBadgeClass(
+                                      badgeText,
+                                      true,
+                                    )}
+                                  >
                                     {badgeText}
                                   </span>
                                 )}
