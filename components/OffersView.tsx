@@ -107,9 +107,9 @@ function buildPageItems(totalPages: number, currentPage: number) {
   ] as const;
 }
 
-export default function OffersView() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function OffersView({ initialProducts = [] }: { initialProducts?: Product[] }) {
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loading, setLoading] = useState(initialProducts.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -140,7 +140,7 @@ export default function OffersView() {
     let active = true;
 
     async function loadProducts() {
-      setLoading(true);
+      setLoading(initialProducts.length === 0);
       setError(null);
 
       try {
@@ -169,7 +169,7 @@ export default function OffersView() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialProducts.length]);
 
   const offerProducts = useMemo(
     () => products.filter((product) => isOffer(product)),

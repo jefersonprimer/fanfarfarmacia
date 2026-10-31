@@ -1,20 +1,21 @@
-"use client";
-
-import { Suspense } from "react";
-import { useParams } from "next/navigation";
+import type { Metadata } from "next";
 import CatalogView from "@/components/CatalogView";
-import CatalogSkeleton from "@/components/CatalogSkeleton";
+import { readableCatalogName } from "@/lib/catalog-seo";
+import { getAllProducts } from "@/lib/products-server";
 
-function BrandPageContent() {
-  const params = useParams<{ nome: string }>();
+type Props = { params: Promise<{ nome: string }> };
 
-  return <CatalogView key={params.nome} brandSlug={params.nome} />;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { nome } = await params;
+  const brand = readableCatalogName(nome);
+  return {
+    title: `${brand} | Produtos e ofertas`,
+    description: `Compre produtos ${brand} na Fanfar Farmácia. Confira opções, preços e ofertas.`,
+    alternates: { canonical: `/marca/${nome}` },
+  };
 }
 
-export default function BrandPage() {
-  return (
-    <Suspense fallback={<CatalogSkeleton />}>
-      <BrandPageContent />
-    </Suspense>
-  );
+export default async function BrandPage({ params }: Props) {
+  const { nome } = await params;
+  return <CatalogView brandSlug={nome} initialProducts={await getAllProducts()} />;
 }

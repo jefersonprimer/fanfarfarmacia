@@ -27,6 +27,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 interface CatalogViewProps {
+  initialProducts?: Product[];
   departmentSlug?: string;
   categorySlug?: string;
   subcategorySlug?: string;
@@ -34,6 +35,7 @@ interface CatalogViewProps {
 }
 
 export default function CatalogView({
+  initialProducts = [],
   departmentSlug,
   categorySlug,
   subcategorySlug,
@@ -41,8 +43,8 @@ export default function CatalogView({
 }: CatalogViewProps) {
   const router = useRouter();
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loading, setLoading] = useState(initialProducts.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -59,7 +61,7 @@ export default function CatalogView({
     let active = true;
 
     async function loadProducts() {
-      setLoading(true);
+      setLoading(initialProducts.length === 0);
       setError(null);
 
       try {
@@ -88,7 +90,7 @@ export default function CatalogView({
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialProducts.length]);
 
   const configDepartment = useMemo(
     () => (departmentSlug ? findDepartmentBySlug(departmentSlug) : null),

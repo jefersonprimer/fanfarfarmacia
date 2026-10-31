@@ -6,7 +6,7 @@ import CartToast from "@/components/CartToast";
 import AnnouncementBar from "@/components/AnnouncementBar";
 
 export const metadata: Metadata = {
-  title: "Black Week Fanfar Farmácia | Ofertas e Descontos",
+  title: "Black Week: ofertas e descontos",
   description:
     "Black Week Fanfar: 20% de desconto em toda a loja. Desconto máximo de R$ 100. Combina com cupom. Aproveite enquanto dura!",
 };

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalShell from "@/components/ConditionalShell";
+import { siteUrl } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,9 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fanfar - Farmácia Online | Rémedios, Medicamentos e muito mais",
+  metadataBase: siteUrl,
+  title: {
+    default: "Fanfar Farmácia | Medicamentos, saúde e beleza",
+    template: "%s | Fanfar Farmácia",
+  },
   description:
-    "Sua farmácia online completa com remédios, medicamentos, itens de saúde, beleza e muito mais com entrega rápida.",
+    "Compre medicamentos, produtos de saúde, higiene e beleza na Fanfar Farmácia. Confira ofertas e opções de entrega.",
   verification: {
     google: "iFNvvYLli4pLzw8Ne01U4uBkal2KzUsQdMzQ8Wjcy5M",
   },

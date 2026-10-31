@@ -1,27 +1,22 @@
-"use client";
-
-import { Suspense } from "react";
-import { useParams } from "next/navigation";
+import type { Metadata } from "next";
 import CatalogView from "@/components/CatalogView";
-import CatalogSkeleton from "@/components/CatalogSkeleton";
+import { readableCatalogName } from "@/lib/catalog-seo";
+import { getAllProducts } from "@/lib/products-server";
 
-function CategoryPageContent() {
-  const params = useParams<{ departamento: string; categoria: string }>();
-  const { departamento, categoria } = params;
+type Props = { params: Promise<{ departamento: string; categoria: string }> };
 
-  return (
-    <CatalogView
-      key={`${departamento}-${categoria}`}
-      departmentSlug={departamento}
-      categorySlug={categoria}
-    />
-  );
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { departamento, categoria } = await params;
+  const departmentName = readableCatalogName(departamento);
+  const categoryName = readableCatalogName(categoria);
+  return {
+    title: `${categoryName} em ${departmentName}`,
+    description: `Encontre ${categoryName} em ${departmentName}: veja produtos, preços e ofertas na Fanfar Farmácia.`,
+    alternates: { canonical: `/departamento/${departamento}/${categoria}` },
+  };
 }
 
-export default function CategoryPage() {
-  return (
-    <Suspense fallback={<CatalogSkeleton />}>
-      <CategoryPageContent />
-    </Suspense>
-  );
+export default async function CategoryPage({ params }: Props) {
+  const { departamento, categoria } = await params;
+  return <CatalogView departmentSlug={departamento} categorySlug={categoria} initialProducts={await getAllProducts()} />;
 }
