@@ -1,12 +1,12 @@
 import { Client } from "pg";
 import bcrypt from "bcryptjs";
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:%40Jki!P3RH%40AVP785@db.bdatamygfkgqbvogivgf.supabase.co:5432/postgres";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) throw new Error("DATABASE_URL não está configurada.");
 
 const adminEmail = process.env.ADMIN_EMAIL || "fanfarfarmacia@gmail.com";
-const adminPassword = process.env.ADMIN_PASSWORD || "12345678";
+const adminPassword = process.env.ADMIN_PASSWORD;
+if (!adminPassword) throw new Error("ADMIN_PASSWORD não está configurada.");
 
 async function createAdmin() {
   const client = new Client({

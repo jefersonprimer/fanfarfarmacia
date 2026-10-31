@@ -11,7 +11,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/ord
     const { id } = await params;
     const { status, note } = await request.json();
     if (!["approved", "cancelled", "out_for_delivery", "delivered"].includes(status)) return NextResponse.json({ error: "Status inválido." }, { status: 400 });
-    const allowedPrevious: Record<string, string[]> = { approved: ["pending"], cancelled: ["pending", "approved"], out_for_delivery: ["approved"], delivered: ["out_for_delivery"] };
+    const allowedPrevious: Record<string, string[]> = { approved: ["pending"], cancelled: ["pending_payment", "pending", "approved"], out_for_delivery: ["approved"], delivered: ["out_for_delivery"] };
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -20,6 +20,10 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/ord
         await client.query("ROLLBACK");
         return NextResponse.json({ error: "Pedido não encontrado ou já processado." }, { status: 404 });
       }
+      if (status === "approved" && !["approved", "not_required"].includes(current.rows[0].payment_status)) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ error: "O pagamento precisa ser confirmado antes de aprovar o pedido." }, { status: 409 });
+      }
       if (status === "cancelled") {
         for (const item of current.rows[0].items as { productId?: string; quantity?: number }[]) {
           if (item.productId && Number.isInteger(item.quantity) && Number(item.quantity) > 0) {
@@ -27,7 +31,7 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/ord
           }
         }
       }
-      const rows = await client.query(`UPDATE public.orders SET status=$2, history=history || $3::jsonb, updated_at=NOW() WHERE id=$1 RETURNING *`, [id, status, JSON.stringify([{ status, note: typeof note === "string" ? note.slice(0, 300) : ({ approved: "Pedido aprovado pela farmácia.", cancelled: "Pedido cancelado pela farmácia.", out_for_delivery: "Pedido saiu para entrega.", delivered: "Entrega marcada como concluída." } as Record<string, string>)[status], at: new Date().toISOString(), by: user.name }])]);
+      const rows = await client.query(`UPDATE public.orders SET status=$2, payment_status=CASE WHEN $2='cancelled' AND payment_status='pending' THEN 'cancelled' ELSE payment_status END, history=history || $3::jsonb, updated_at=NOW() WHERE id=$1 RETURNING *`, [id, status, JSON.stringify([{ status, note: typeof note === "string" ? note.slice(0, 300) : ({ approved: "Pedido aprovado pela farmácia.", cancelled: "Pedido cancelado pela farmácia.", out_for_delivery: "Pedido saiu para entrega.", delivered: "Entrega marcada como concluída." } as Record<string, string>)[status], at: new Date().toISOString(), by: user.name }])]);
       await client.query("COMMIT");
       return NextResponse.json({ order: rows.rows[0] });
     } catch (error) {

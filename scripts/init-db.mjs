@@ -1,8 +1,7 @@
 import { Client } from "pg";
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:%40Jki!P3RH%40AVP785@db.bdatamygfkgqbvogivgf.supabase.co:5432/postgres";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) throw new Error("DATABASE_URL não está configurada.");
 
 async function init() {
   console.log("Conectando ao banco Supabase PostgreSQL...");

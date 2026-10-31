@@ -7,6 +7,7 @@ import { ensureCouponShippingColumn } from "@/lib/coupons-server";
 import { getStoreSchedule } from "@/lib/delivery-server";
 import { ensurePromotionsSchema } from "@/lib/promotions-schema";
 import { getScheduleError } from "@/lib/store-hours";
+import { createCheckoutOrder } from "@/lib/mercadopago";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -96,13 +97,48 @@ export async function POST(request: Request) {
       }
       deliveryFee = 0;
     }
-    const history = [{ status: "pending", note: "Pedido recebido e aguardando aprovação da farmácia.", at: new Date().toISOString() }];
+    const history = [{ status: "pending_payment", note: "Pedido criado e aguardando pagamento.", at: new Date().toISOString() }];
     for (const item of snapshot) {
       await client.query(`UPDATE public.products SET stock = stock - $2, updated_at = NOW() WHERE id = $1`, [item.productId, item.quantity]);
     }
-    const result = await client.query(`INSERT INTO public.orders (user_id, items, address, scheduled_for, subtotal, total, history) VALUES ($1,$2::jsonb,$3::jsonb,$4,$5,$6,$7::jsonb) RETURNING *`, [user.id, JSON.stringify(snapshot), JSON.stringify(address), scheduled.toISOString(), subtotal, subtotal + deliveryFee, JSON.stringify(history)]);
+    const result = await client.query(`INSERT INTO public.orders (user_id, status, payment_status, items, address, scheduled_for, subtotal, total, history) VALUES ($1,'pending_payment','pending',$2::jsonb,$3::jsonb,$4,$5,$6,$7::jsonb) RETURNING *`, [user.id, JSON.stringify(snapshot), JSON.stringify(address), scheduled.toISOString(), subtotal, subtotal + deliveryFee, JSON.stringify(history)]);
     await client.query("COMMIT");
-    return NextResponse.json({ order: result.rows[0] }, { status: 201 });
+    const order = result.rows[0];
+    try {
+      const paymentOrder = await createCheckoutOrder({
+        orderId: order.id,
+        items: snapshot.map((item: { name: string; quantity: number; unitPrice: number }) => item),
+        deliveryFee,
+        email: user.email,
+        baseUrl: new URL(request.url).origin,
+      });
+      const updated = await query(
+        `UPDATE public.orders SET payment_order_id=$2, payment_url=$3, history=history || $4::jsonb, updated_at=NOW() WHERE id=$1 RETURNING *`,
+        [order.id, paymentOrder.id, paymentOrder.url, JSON.stringify([{ status: "pending_payment", note: "Order de pagamento criada no Mercado Pago.", at: new Date().toISOString() }])],
+      );
+      return NextResponse.json({ order: updated[0], checkoutUrl: paymentOrder.url, paymentOrderId: paymentOrder.id }, { status: 201 });
+    } catch (paymentError) {
+      const rollback = await pool.connect();
+      try {
+        await rollback.query("BEGIN");
+        const current = await rollback.query(`SELECT items FROM public.orders WHERE id=$1 AND status='pending_payment' FOR UPDATE`, [order.id]);
+        if (current.rows.length) {
+          for (const item of current.rows[0].items as { productId?: string; quantity?: number }[]) {
+            if (item.productId && Number.isInteger(item.quantity) && Number(item.quantity) > 0) {
+              await rollback.query(`UPDATE public.products SET stock=stock+$2, updated_at=NOW() WHERE id=$1`, [item.productId, item.quantity]);
+            }
+          }
+          await rollback.query(`UPDATE public.orders SET status='cancelled', payment_status='checkout_failed', history=history || $2::jsonb, updated_at=NOW() WHERE id=$1`, [order.id, JSON.stringify([{ status: "cancelled", note: "Não foi possível iniciar o pagamento.", at: new Date().toISOString() }])]);
+        }
+        await rollback.query("COMMIT");
+      } catch (rollbackError) {
+        await rollback.query("ROLLBACK");
+        throw rollbackError;
+      } finally {
+        rollback.release();
+      }
+      throw paymentError;
+    }
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

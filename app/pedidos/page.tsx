@@ -13,6 +13,8 @@ import {
 type Order = {
   id: string;
   status: string;
+  payment_status: string;
+  payment_url?: string | null;
   items: {
     name: string;
     quantity: number;
@@ -35,11 +37,29 @@ type Order = {
   history: { status: string; note: string; at: string }[];
 };
 const labels: Record<string, string> = {
+  pending_payment: "Aguardando pagamento",
   pending: "Aguardando aprovação",
   approved: "Pedido aprovado",
   out_for_delivery: "Saiu para entrega",
   delivered: "Entrega concluída",
   cancelled: "Pedido cancelado",
+  payment_pending: "Pagamento pendente",
+  payment_in_process: "Pagamento em análise",
+  payment_approved: "Pagamento confirmado",
+  payment_rejected: "Pagamento recusado",
+  payment_cancelled: "Pagamento cancelado",
+  payment_refunded: "Pagamento reembolsado",
+  payment_charged_back: "Pagamento contestado",
+};
+const paymentLabels: Record<string, string> = {
+  pending: "Aguardando pagamento",
+  in_process: "Pagamento em análise",
+  approved: "Pagamento confirmado",
+  rejected: "Pagamento recusado",
+  cancelled: "Pagamento cancelado",
+  refunded: "Pagamento reembolsado",
+  partially_refunded: "Pagamento parcialmente reembolsado",
+  charged_back: "Pagamento contestado",
 };
 const money = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -157,9 +177,11 @@ export default function OrdersPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold ${order.status === "approved" ? "bg-emerald-50 text-emerald-700" : order.status === "cancelled" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800"}`}
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${order.status === "approved" || order.payment_status === "approved" ? "bg-emerald-50 text-emerald-700" : order.status === "cancelled" || order.payment_status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800"}`}
                       >
-                        {labels[order.status] || order.status}
+                        {order.status === "pending_payment"
+                          ? paymentLabels[order.payment_status] || labels[order.status]
+                          : labels[order.status] || order.status}
                       </span>
                       <ChevronDown
                         className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -192,6 +214,17 @@ export default function OrdersPage() {
                             <span>Total</span>
                             <span>{money.format(Number(order.total))}</span>
                           </p>
+                          <p className="mt-2 text-xs text-gray-500">
+                            {paymentLabels[order.payment_status] || (order.payment_status === "not_required" ? "Pagamento não registrado para este pedido antigo" : "Pagamento: " + order.payment_status)}
+                          </p>
+                          {order.status === "pending_payment" && order.payment_url && ["pending", "in_process", "rejected"].includes(order.payment_status) && (
+                            <a
+                              href={order.payment_url}
+                              className="mt-4 inline-flex rounded-lg bg-[#279236] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1f7a2b]"
+                            >
+                              {order.payment_status === "rejected" ? "Tentar pagar novamente" : "Continuar pagamento"}
+                            </a>
+                          )}
                         </div>
                         <div>
                           <p className="flex items-center gap-2 text-sm font-bold text-gray-900">

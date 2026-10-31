@@ -13,6 +13,7 @@ import {
 type Order = {
   id: string;
   status: string;
+  payment_status: string;
   items: { name: string; quantity: number; lineTotal: number }[];
   address: {
     street: string;
@@ -32,11 +33,25 @@ type Order = {
   customer_email: string;
 };
 const statusLabels: Record<string, string> = {
+  pending_payment: "Aguardando pagamento",
   pending: "Aguardando aprovação",
   approved: "Aprovado",
   out_for_delivery: "Saiu para entrega",
   delivered: "Entrega concluída",
   cancelled: "Cancelado",
+};
+const paymentLabels: Record<string, string> = {
+  pending: "Pendente",
+  in_process: "Em análise",
+  approved: "Pago",
+  rejected: "Recusado",
+  cancelled: "Cancelado",
+  refunded: "Reembolsado",
+  partially_refunded: "Parcialmente reembolsado",
+  charged_back: "Contestado",
+  checkout_failed: "Falha ao iniciar pagamento",
+  preference_failed: "Falha ao gerar pagamento",
+  not_required: "Pedido anterior à integração",
 };
 const money = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -238,6 +253,9 @@ export default function AdminOrdersPage() {
                             )}
                           </p>
                           <p className="mt-3 text-xs text-gray-500">
+                            Pagamento: {paymentLabels[order.payment_status] ?? order.payment_status}
+                          </p>
+                          <p className="mt-2 text-xs text-gray-500">
                             Histórico:{" "}
                             {order.history
                               .map((entry) => entry.note)
@@ -245,7 +263,7 @@ export default function AdminOrdersPage() {
                           </p>
                         </div>
                       </div>
-                      {order.status === "pending" && (
+                      {(order.status === "pending_payment" || order.status === "pending") && (
                         <div className="flex justify-end gap-2 border-t border-gray-100 px-5 pb-5 pt-4">
                           <button
                             onClick={() => void update(order.id, "cancelled")}
@@ -253,12 +271,14 @@ export default function AdminOrdersPage() {
                           >
                             Cancelar pedido
                           </button>
-                          <button
-                            onClick={() => void update(order.id, "approved")}
-                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                          >
-                            Aprovar pedido
-                          </button>
+                          {order.status === "pending" && ["approved", "not_required"].includes(order.payment_status) && (
+                            <button
+                              onClick={() => void update(order.id, "approved")}
+                              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                            >
+                              Aprovar pedido
+                            </button>
+                          )}
                         </div>
                       )}
                       {order.status === "approved" && (

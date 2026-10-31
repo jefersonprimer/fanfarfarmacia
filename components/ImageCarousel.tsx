@@ -107,7 +107,7 @@ export default function ImageCarousel({
                   alt={image.alt}
                   fill
                   preload={index === 0}
-                  sizes="100vw"
+                  sizes="(max-width: 639px) 100vw, 1px"
                   className="object-cover sm:hidden"
                 />
               )}

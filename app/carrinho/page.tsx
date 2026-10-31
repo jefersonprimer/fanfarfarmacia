@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -28,7 +27,6 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 });
 
 export default function CartPage() {
-  const router = useRouter();
   const deliveryFee = useDeliveryFee();
   const freeShippingPromotions = useFreeShippingPromotion();
   const storeSchedule = useStoreSchedule();
@@ -173,7 +171,7 @@ export default function CartPage() {
       if (!response.ok)
         throw new Error(data.error || "Não foi possível finalizar o pedido.");
       clearCart();
-      router.push(`/pedidos?novo=${data.order.id}`);
+      window.location.assign(data.checkoutUrl);
     } catch (error) {
       setCheckoutError(
         error instanceof Error
@@ -799,7 +797,7 @@ export default function CartPage() {
                   disabled={checkoutLoading || Boolean(scheduleError)}
                   className="rounded-xl bg-[#279236] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f7a2b] disabled:opacity-60 cursor-pointer"
                 >
-                  {checkoutLoading ? "Enviando pedido..." : "Confirmar pedido"}
+                  {checkoutLoading ? "Preparando pagamento..." : "Ir para o pagamento"}
                 </button>
               </footer>
             </form>
