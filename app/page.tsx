@@ -26,21 +26,25 @@ const HOME_BANNERS: CarouselImage[] = [
   },
   {
     src: "/banners/Fanfar Green Sunscreen Sale Banner.png",
+    mobileSrc: "/banners/Fanfar Green Sunscreen Sale Banner-mobile.png",
     alt: "Produtos de proteção solar ate 70% de desconto",
     href: "/ofertas",
   },
   {
     src: "/banners/Fanfar Infantil_ Ofertas em Verde.png",
+    mobileSrc: "/banners/Fanfar Infantil_ Ofertas em Verde.png-mobile.png",
     alt: "Produtos infantil ate 50% off",
     href: "/ofertas",
   },
   {
     src: "/banners/Mantenha Seu Tratamento com Desconto.png",
     alt: "Mantenha Seu Tratamento com Desconto ate 75% off",
+    mobileSrc: "/banners/Mantenha Seu Tratamento com Desconto-mobile.png",
     href: "/ofertas",
   },
   {
     src: "/banners/Green Bath & Wellness Sale.png",
+    mobileSrc: "/banners/Green Bath & Wellness Sale-mobile.png",
     alt: "Green Bath & Wellness Sale",
     href: "/ofertas",
   },
@@ -308,7 +312,7 @@ export default function Home() {
   return (
     <main className="flex-1 bg-white">
       <SubHeader />
-      <section className="border-b border-gray-100 bg-white">
+      <section className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <ImageCarousel images={HOME_BANNERS} />
         </div>

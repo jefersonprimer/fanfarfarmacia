@@ -60,9 +60,9 @@ export default function CartToast() {
 
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1 text-sm font-semibold text-emerald-700">
-            Produto adicionado ao seu carrinho
+            Produto adicionado à sua cesta!
           </p>
-          <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">
+          <p className="mt-0.5 line-clamp-2 text-sm font-normal text-gray-900">
             {toast.product.name}
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function CartToast() {
           aria-label="Fechar notificação"
           className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>

@@ -293,6 +293,25 @@ export default function Header({
   }, []);
 
   useEffect(() => {
+    if (!dropdownOpen || window.matchMedia("(min-width: 640px)").matches)
+      return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [dropdownOpen]);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDropdownOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [dropdownOpen]);
+
+  useEffect(() => {
     if (!mobileNavOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileNavOpen(false);
@@ -400,7 +419,7 @@ export default function Header({
                     aria-label="Fechar navegação"
                     className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-6 w-6" />
                   </button>
                 </div>
                 <nav className="flex-1 overflow-y-auto px-4 py-3 text-sm">
@@ -752,7 +771,7 @@ export default function Header({
                 href="/admin"
                 className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 sm:text-sm"
               >
-                <Plus className="h-4 w-4 text-gray-400" />
+                <Plus className="h-5 w-5 text-gray-400" />
                 <span>Criar</span>
               </Link>
             )}
@@ -772,7 +791,7 @@ export default function Header({
                       <UserIcon className="h-5 w-5" />
                     )}
                   </div>
-                  <div className="hidden sm:flex flex-col text-left max-w-[140px]">
+                  <div className="hidden md:flex flex-col text-left max-w-[140px]">
                     <span className="text-xs text-gray-500 font-medium leading-none mb-1">
                       Bem vindo
                     </span>
@@ -787,7 +806,25 @@ export default function Header({
 
                 {/* Dropdown Menu do Usuário */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Menu da conta"
+                    className="fixed inset-0 z-[100] h-dvh w-screen overflow-y-auto bg-white shadow-xl animate-in fade-in duration-100 sm:absolute sm:right-0 sm:top-full sm:inset-auto sm:z-50 sm:mt-2 sm:h-auto sm:w-64 sm:overflow-hidden sm:rounded-2xl sm:border sm:border-gray-100 sm:shadow-xl sm:zoom-in-95"
+                  >
+                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:hidden">
+                      <span className="text-base font-semibold text-gray-900">
+                        Minha conta
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDropdownOpen(false)}
+                        aria-label="Fechar menu da conta"
+                        className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100"
+                      >
+                        <X size={24} />
+                      </button>
+                    </div>
                     <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/70 px-4 py-4">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-sm font-bold text-gray-700 shadow-sm">
                         {displayName ? (
@@ -813,7 +850,7 @@ export default function Header({
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
                         >
-                          <Shield className="h-4 w-4 text-gray-500" />
+                          <Shield className="h-5 w-5 text-gray-500" />
                           <span>Painel do Admin</span>
                           <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                             Admin
@@ -826,7 +863,7 @@ export default function Header({
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
                       >
-                        <PackageCheck className="h-4 w-4 text-gray-500" />
+                        <PackageCheck className="h-5 w-5 text-gray-500" />
                         <span>Meus Pedidos</span>
                       </Link>
 
@@ -835,7 +872,7 @@ export default function Header({
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
                       >
-                        <ListChecks className="h-4 w-4 text-gray-500" />
+                        <ListChecks className="h-5 w-5 text-gray-500" />
                         <span>Minha lista</span>
                       </Link>
 
@@ -844,7 +881,7 @@ export default function Header({
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
                       >
-                        <Tag className="h-4 w-4 text-gray-500" />
+                        <Tag className="h-5 w-5 text-gray-500" />
                         <span>Cupons de desconto</span>
                       </Link>
 
@@ -855,7 +892,7 @@ export default function Header({
                         onClick={handleLogout}
                         className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600"
                       >
-                        <LogOut className="h-4 w-4 text-gray-400 transition-colors group-hover:text-red-500" />
+                        <LogOut className="h-5 w-5 text-gray-400 transition-colors group-hover:text-red-500" />
                         <span>Sair da conta</span>
                       </button>
                     </div>

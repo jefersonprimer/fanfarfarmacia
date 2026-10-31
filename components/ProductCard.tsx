@@ -35,7 +35,10 @@ export default function ProductCard({
   const promoAppliesAtOne =
     promotion !== null && minQuantity <= 1 && promotedUnitPrice < unitPrice;
   const displayPrice = promoAppliesAtOne ? promotedUnitPrice : unitPrice;
-  const unitPriceLabel = getUnitPriceLabel(product.specifications, displayPrice);
+  const unitPriceLabel = getUnitPriceLabel(
+    product.specifications,
+    displayPrice,
+  );
   const originalPrice = product.original_price ?? null;
   const comparePrice = promoAppliesAtOne
     ? unitPrice
@@ -74,8 +77,8 @@ export default function ProductCard({
     <article
       className={
         theme === "dark"
-          ? "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 p-3 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_24px_rgba(251,191,36,0.08)]"
-          : "group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 transition-shadow hover:shadow-lg"
+          ? "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 p-3 transition-colors hover:border-white/25"
+          : "group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 transition-colors hover:border-gray-300"
       }
     >
       <div className="relative">
@@ -88,7 +91,7 @@ export default function ProductCard({
               src={image}
               alt={product.name}
               loading="lazy"
-              className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-contain p-3"
             />
           ) : (
             <Package className="h-10 w-10 text-gray-300" aria-hidden="true" />
@@ -97,9 +100,11 @@ export default function ProductCard({
           {badgeText && (
             <span
               className={
-                theme === "dark"
-                  ? "absolute right-2 top-2 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-black shadow-sm"
-                  : `absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ${isNewBadge ? "bg-[#279236]" : "bg-red-500"}`
+                isNewBadge
+                  ? "absolute left-2 top-2 rounded-br-xl rounded-tl-xl bg-[#279236] px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white shadow-md"
+                  : theme === "dark"
+                    ? "absolute right-2 top-2 rounded-full bg-yellow-400 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-sm"
+                    : "absolute right-2 top-2 rounded-full bg-red-500 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm"
               }
             >
               {badgeText}
@@ -107,7 +112,7 @@ export default function ProductCard({
           )}
         </Link>
 
-        <div className="absolute bottom-2 right-2 z-10">
+        <div className="absolute bottom-2 left-2 right-2 z-10 flex justify-end">
           {quantity === 0 ? (
             <button
               type="button"
@@ -115,18 +120,18 @@ export default function ProductCard({
               aria-label={`Adicionar ${product.name} ao carrinho`}
               className={
                 theme === "dark"
-                  ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-black shadow-md transition hover:bg-yellow-300 active:scale-95 cursor-pointer"
-                  : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#279236] text-white shadow-md transition hover:bg-[#1f7a2b] active:scale-95 cursor-pointer"
+                  ? "flex shrink-0 items-center justify-center rounded-full bg-yellow-400 p-2 text-black shadow-md transition hover:bg-yellow-300 active:scale-95 cursor-pointer"
+                  : "flex shrink-0 items-center justify-center rounded-full bg-[#279236] p-2 text-white shadow-md transition hover:bg-[#1f7a2b] active:scale-95 cursor-pointer"
               }
             >
-              <Plus size={20} />
+              <Plus size={24} />
             </button>
           ) : (
             <div
               className={
                 theme === "dark"
-                  ? "flex shrink-0 items-center gap-0.5 rounded-full border border-yellow-400/40 bg-zinc-800 p-0.5 shadow-md"
-                  : "flex shrink-0 items-center gap-0.5 rounded-full border border-[#279236]/25 bg-white p-0.5 shadow-md"
+                  ? "flex w-full items-center rounded-full border border-yellow-400/40 bg-zinc-800 p-1"
+                  : "flex w-full items-center rounded-full border border-[#279236]/25 bg-white p-1"
               }
             >
               <button
@@ -135,15 +140,15 @@ export default function ProductCard({
                 aria-label="Diminuir quantidade"
                 className={
                   theme === "dark"
-                    ? "flex h-7 w-7 items-center justify-center rounded-full text-yellow-400 transition hover:bg-white/10"
-                    : "flex h-7 w-7 items-center justify-center rounded-full text-[#279236] transition hover:bg-white"
+                    ? "flex flex-1 items-center justify-center rounded-full p-1 text-yellow-400 transition hover:bg-white/10"
+                    : "flex flex-1 items-center justify-center rounded-full p-1 text-[#279236] transition hover:bg-gray-100"
                 }
               >
-                <Minus size={20} />
+                <Minus size={24} />
               </button>
               <span
                 aria-live="polite"
-                className={`min-w-5 text-center text-sm font-bold ${theme === "dark" ? "text-yellow-400" : "text-[#279236]"}`}
+                className={`min-w-5 flex-1 border-l border-r text-center text-sm font-medium ${theme === "dark" ? "border-white/15 text-[#363148]" : "border-gray-200 text-[#363148]"}`}
               >
                 {quantity}
               </span>
@@ -153,11 +158,11 @@ export default function ProductCard({
                 aria-label="Aumentar quantidade"
                 className={
                   theme === "dark"
-                    ? "flex h-7 w-7 items-center justify-center rounded-full text-yellow-400 transition hover:bg-white/10"
-                    : "flex h-7 w-7 items-center justify-center rounded-full text-[#279236] transition hover:bg-white"
+                    ? "flex flex-1 items-center justify-center rounded-full  border-white/15 p-1 text-yellow-400 transition hover:bg-white/10"
+                    : "flex flex-1 items-center justify-center rounded-full  border-gray-200 p-1 text-[#279236] transition hover:bg-gray-100"
                 }
               >
-                <Plus size={20} />
+                <Plus size={24} />
               </button>
             </div>
           )}
@@ -196,7 +201,9 @@ export default function ProductCard({
           </p>
 
           {unitPriceLabel && (
-            <p className={`mt-1 text-xs ${theme === "dark" ? "text-white/50" : "text-gray-500"}`}>
+            <p
+              className={`mt-1 text-xs ${theme === "dark" ? "text-white/50" : "text-gray-500"}`}
+            >
               {unitPriceLabel}
             </p>
           )}

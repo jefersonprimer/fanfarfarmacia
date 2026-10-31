@@ -140,6 +140,7 @@ function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   const [zoomOpen, setZoomOpen] = useState(false);
   const detailsRef = useRef<HTMLElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -437,7 +438,10 @@ function ProductDetail() {
   const promoAppliesAtOne =
     promotion !== null && minQuantity <= 1 && promotedUnitPrice < unitPrice;
   const displayPrice = promoAppliesAtOne ? promotedUnitPrice : unitPrice;
-  const unitPriceLabel = getUnitPriceLabel(product.specifications, displayPrice);
+  const unitPriceLabel = getUnitPriceLabel(
+    product.specifications,
+    displayPrice,
+  );
   const originalPrice = product.original_price ?? null;
   const comparePrice = promoAppliesAtOne
     ? unitPrice
@@ -524,14 +528,32 @@ function ProductDetail() {
               </Link>
             </>
           )}
-          <ChevronRight className="h-3.5 w-3.5 text-gray-300" />
-          <span className="truncate text-gray-700">{product.name}</span>
+          <ChevronRight className="h-3.5 w-3.5 text-gray-300 hidden md:flex" />
+          <span className="truncate text-gray-700 hidden md:flex">
+            {product.name}
+          </span>
         </nav>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div>
             <div className="w-full max-w-md">
-              <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-white p-6">
+              <div
+                className="relative flex aspect-square touch-pan-y items-center justify-center overflow-hidden rounded-2xl bg-white p-6"
+                onTouchStart={(event) => {
+                  touchStartX.current = event.touches[0]?.clientX ?? null;
+                }}
+                onTouchEnd={(event) => {
+                  if (touchStartX.current === null || images.length < 2) return;
+
+                  const deltaX = event.changedTouches[0].clientX - touchStartX.current;
+                  touchStartX.current = null;
+
+                  if (Math.abs(deltaX) < 40) return;
+                  setActiveImage((current) =>
+                    (current + (deltaX < 0 ? 1 : -1) + images.length) % images.length,
+                  );
+                }}
+              >
                 {mainImage ? (
                   <img
                     src={mainImage}
@@ -565,7 +587,7 @@ function ProductDetail() {
                             (current - 1 + images.length) % images.length,
                         )
                       }
-                      className="absolute left-3 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-sm transition hover:border-green-300 hover:text-green-600"
+                      className="absolute left-3 top-1/2 hidden sm:inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-sm transition hover:border-green-300 hover:text-green-600"
                       aria-label="Imagem anterior"
                     >
                       <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -577,7 +599,7 @@ function ProductDetail() {
                           (current) => (current + 1) % images.length,
                         )
                       }
-                      className="absolute right-3 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-sm transition hover:border-green-300 hover:text-green-600"
+                      className="absolute right-3 top-1/2 hidden sm:inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-700 shadow-sm transition hover:border-green-300 hover:text-green-600"
                       aria-label="Próxima imagem"
                     >
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
@@ -587,7 +609,7 @@ function ProductDetail() {
               </div>
 
               {images.length > 1 && (
-                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                <div className="mt-3 hidden gap-2 overflow-x-auto pb-1 sm:flex">
                   {images.map((image, index) => (
                     <button
                       key={`${image}-${index}`}
@@ -606,6 +628,24 @@ function ProductDetail() {
                         className="h-full w-full object-contain"
                       />
                     </button>
+                  ))}
+                </div>
+              )}
+              {images.length > 1 && (
+                <div className="mt-3 flex items-center justify-center gap-2 sm:hidden" aria-label="Imagens do produto">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setActiveImage(index)}
+                      className={`h-2 rounded-full transition-all ${
+                        index === activeImage
+                          ? "w-5 bg-[#279236]"
+                          : "w-2 bg-gray-300"
+                      }`}
+                      aria-label={`Ver imagem ${index + 1}`}
+                      aria-current={index === activeImage ? "true" : undefined}
+                    />
                   ))}
                 </div>
               )}
@@ -750,29 +790,29 @@ function ProductDetail() {
                     Adicionar à cesta
                   </button>
                 ) : (
-                  <div className="flex items-center justify-between rounded-full border border-[#279236]/25 bg-[#279236]/5 p-1.5">
+                  <div className="flex w-full items-center rounded-full border border-[#279236]/25 bg-white p-1">
                     <button
                       type="button"
                       onClick={decreaseQuantity}
                       aria-label="Diminuir quantidade"
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#279236] shadow-sm transition hover:bg-[#279236]/10"
+                      className="flex flex-1 items-center justify-center rounded-full p-1 text-[#279236] transition hover:bg-gray-100"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus size={24} />
                     </button>
                     <span
                       aria-live="polite"
-                      className="text-sm font-bold text-[#279236]"
+                      className="min-w-5 flex-1 border-l border-r border-gray-200 text-center text-sm font-medium text-[#363148]"
                     >
-                      {quantity} no carrinho
+                      {quantity}
                     </span>
                     <button
                       type="button"
                       onClick={increaseQuantity}
                       disabled={quantity >= product.stock}
                       aria-label="Aumentar quantidade"
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#279236] shadow-sm transition hover:bg-[#279236]/10 disabled:cursor-not-allowed disabled:text-gray-300"
+                      className="flex flex-1 items-center justify-center rounded-full p-1 text-[#279236] transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-300"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus size={24} />
                     </button>
                   </div>
                 )}

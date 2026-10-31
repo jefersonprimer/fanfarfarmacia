@@ -145,7 +145,7 @@ export default function ImageCarousel({
             type="button"
             onClick={previous}
             aria-label="Imagem anterior"
-            className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-gray-700 shadow-md backdrop-blur transition hover:bg-white hover:text-blue-600 sm:h-10 sm:w-10"
+            className="hidden sm:flex absolute left-3 top-1/2 z-10 h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-gray-700 shadow-md backdrop-blur transition hover:bg-white hover:text-blue-600 sm:h-10 sm:w-10"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -154,7 +154,7 @@ export default function ImageCarousel({
             type="button"
             onClick={next}
             aria-label="Próxima imagem"
-            className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-gray-700 shadow-md backdrop-blur transition hover:bg-white hover:text-blue-600 sm:h-10 sm:w-10"
+            className="hidden sm:flex absolute right-3 top-1/2 z-10 h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-gray-700 shadow-md backdrop-blur transition hover:bg-white hover:text-blue-600 sm:h-10 sm:w-10"
           >
             <ChevronRight className="h-5 w-5" />
           </button>

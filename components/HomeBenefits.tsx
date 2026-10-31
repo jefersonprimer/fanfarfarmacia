@@ -1,13 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import {
-  BadgePercent,
-  Star,
-  Stethoscope,
-  Store,
-  Truck,
-} from "lucide-react";
+import { BadgePercent, Star, Stethoscope, Store, Truck } from "lucide-react";
 
 interface Benefit {
   icon: LucideIcon;
@@ -51,14 +45,9 @@ const BENEFITS: Benefit[] = [
 
 export default function HomeBenefits() {
   return (
-    <section
-      aria-label="Benefícios da Fanfar"
-      className="border-b border-gray-100 bg-white"
-    >
+    <section aria-label="Benefícios da Fanfar" className="bg-white">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <ul
-          className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:snap-none lg:grid-cols-5"
-        >
+        <ul className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:snap-none lg:grid-cols-5">
           {BENEFITS.map(({ icon: Icon, title, description, iconClassName }) => (
             <li
               key={title}
