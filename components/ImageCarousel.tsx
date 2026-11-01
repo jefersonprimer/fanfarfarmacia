@@ -19,6 +19,7 @@ interface ImageCarouselProps {
   className?: string;
 }
 
+// image mobile dimensions 470x294
 export default function ImageCarousel({
   images,
   autoPlay = true,
